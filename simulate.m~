@@ -1,26 +1,29 @@
-function [T, X] = simulate(odefun, L, t_range, L_hash, depict, member_names)
+function [T, X] = simulate(odefun, L, t_range, L_hash, depict, run_count, member_names, colors, fig_size, font_size)
 
-    xbounds = [0, 10];
-    x0 = randrange(n, xbounds);
+    xbounds = [0, 1];
+    x0 = randrange(length(L), xbounds);
     
     % Simulation
     [T, X] = ode45(odefun, t_range, x0, [], L);
 
     % Figure generation if desired
     if (depict)
-        fh(fig_count) = figure(fig_count);
-        for i = 1:n
+        fh = figure();
+        for i = 1:length(L)
             hold on;
             plot(T, X(:, i), 'LineWidth', 2.5, 'Color', colors(i, :));
         end
-        fh(fig_count).Position = figSize;
-        xlabel('Time [t] (s)', 'Interpreter', 'Latex', 'FontSize', fontsize)
-        ylabel('Position [x] (m)', 'Interpreter', 'Latex', 'FontSize', fontsize)
-        title('Position [x] vs. Time [t] (s)', 'Interpreter', 'Latex', 'FontSize', fontsize)
-        legend(member_names, 'Location', 'northeastoutside', 'Interpreter', 'Latex', 'FontSize', fontsize);
+        fh.Position = fig_size;
+        xlabel('Time [t] (s)', 'Interpreter', 'Latex', 'FontSize', font_size)
+        ylabel('Position [x] (m)', 'Interpreter', 'Latex', 'FontSize', font_size)
+        title('Position [x] vs. Time [t] (s)', 'Interpreter', 'Latex', 'FontSize', font_size)
+        legend(member_names, 'Location', 'northeastoutside', 'Interpreter', 'Latex', 'FontSize', font_size);
         grid on;
-        export_fig(get_fig_name('))
-        fig_count = inc(fig_count);
+        if (~exist(get_subfolder_name('local_consensus'), 'dir'))
+            mkdir(get_subfolder_name('local_consensus'));
+        end
+        export_fig(get_fig_name('local_consensus', 'lc', L_hash, int2str(run_count, 'png'));
+        close(fh)
     end
     
 end

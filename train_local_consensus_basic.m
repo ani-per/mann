@@ -5,11 +5,22 @@ close all;
 set(0, 'DefaultFigureVisible', 'off');
 set(0, 'DefaultFigureColor', [1 1 1]);
 set(0, 'DefaultAxesGridAlpha', 0.35)
-fig_size = [50 50 750 350]; fig_count = 1; p_count = 1; font_size = 17.5;
+fig_size = [50 50 600 300]; fig_count = 1; p_count = 1; font_size = 17.5;
+
+n = 6; % Number of nodes
+sim_count = 1; % Counter of number of individual simulations
+L_count = 1; % Counter of number of unique L matrices generated
+num_runs = 4; % Counter of number of simulations for each L matrix
+
+% Misc variables
+colors = distinguishable_colors(n);
+member_names = cell(1, n);
+for i = 1:n
+    member_names{1, i} = strcat("Node ", int2str(i));
+end
+
 
 % Graph topology
-n = 6;
-colors = distinguishable_colors(n);
 A = zeros(n, n);
 D = zeros(n, n);
 
@@ -36,19 +47,25 @@ end
 if (~issymmetric(D))
     warning("D isn't symmetric! This means consensus may not be guaranteed!");
 end
-L = D - A;
+
+% Laplacian
+L = D - A; % Generate L
+systems(sim_count).L = L;
 
 % Hash generation for L
 L_hash = GetMD5(L);
+systems(sim_count).L_hash = L_hash;
 
 % Simulation
 depict = true;
-t_range = [0, 5];
+t_range = [0, 10];
 xbounds = [0, 10];
-member_names = cell(1, n);
-for i = 1:n
-    member_names{1, i} = strcat("Node ", int2str(i));
+
+for i = 1:num_runs
+    [T, X] = simulate(@local_protocol, L, t_range, L_hash, xbounds, depict, i, colors, fig_size, font_size);
+    systems(sim_count).X = X;
+    inc(sim_count);
 end
-simulate(@local_protocol, L, t_range, L_hash, depict, member_names, colors, fig_size, font_size);
+inc(L_count);
 
 toc
