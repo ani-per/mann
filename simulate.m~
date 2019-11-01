@@ -1,0 +1,26 @@
+function [T, X] = simulate(odefun, L, t_range, L_hash, depict, member_names)
+
+    xbounds = [0, 10];
+    x0 = randrange(n, xbounds);
+    
+    % Simulation
+    [T, X] = ode45(odefun, t_range, x0, [], L);
+
+    % Figure generation if desired
+    if (depict)
+        fh(fig_count) = figure(fig_count);
+        for i = 1:n
+            hold on;
+            plot(T, X(:, i), 'LineWidth', 2.5, 'Color', colors(i, :));
+        end
+        fh(fig_count).Position = figSize;
+        xlabel('Time [t] (s)', 'Interpreter', 'Latex', 'FontSize', fontsize)
+        ylabel('Position [x] (m)', 'Interpreter', 'Latex', 'FontSize', fontsize)
+        title('Position [x] vs. Time [t] (s)', 'Interpreter', 'Latex', 'FontSize', fontsize)
+        legend(member_names, 'Location', 'northeastoutside', 'Interpreter', 'Latex', 'FontSize', fontsize);
+        grid on;
+        export_fig(get_fig_name('))
+        fig_count = inc(fig_count);
+    end
+    
+end
