@@ -6,6 +6,8 @@ function [T, X] = simulate(odefun, L, t_range, L_hash, depict, xbounds, run_coun
     % Simulation
     [T, X] = ode45(odefun, t_range, x0, [], L);
     
+    % Track progress
+    disp(""
     % Figure generation if desired
     if (depict)
         fh = figure();
