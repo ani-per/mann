@@ -1,4 +1,4 @@
-function [T, X] = simulate(odefun, L, t_range, L_hash, xbounds, depict, run_count, colors, fig_size, font_size)
+function [T, X] = simulate(odefun, L, t_range, L_hash, depict, xbounds, run_count, colors, fig_size, font_size)
 
     xbounds = [0, 1];
     x0 = randrange(length(L), xbounds);
@@ -16,7 +16,7 @@ function [T, X] = simulate(odefun, L, t_range, L_hash, xbounds, depict, run_coun
         fh.Position = fig_size;
         xlabel('Time [t] (s)', 'Interpreter', 'Latex', 'FontSize', font_size)
         ylabel('Position [x] (m)', 'Interpreter', 'Latex', 'FontSize', font_size)
-        title('Position [x] vs. Time [t] (s)', 'Interpreter', 'Latex', 'FontSize', font_size)
+        title({'Position [x] vs. Time [t] (s)'; L_hash}, 'Interpreter', 'Latex', 'FontSize', font_size)
         % legend(member_names, 'Location', 'northeastoutside', 'Interpreter', 'Latex', 'FontSize', font_size);
         ylim(xbounds);
         grid on;

@@ -1,0 +1,11 @@
+function L_list = generate_L_undirected(n)
+
+L_count = 1;
+L = zeros(n, n);
+all_cand_rows = permn([0, 1], n);
+cand_rows =  
+for i = 1:n
+    cand_rows(:, :, i) = [permn([0, 1], 2), zeros(4, 2)];
+end
+
+end

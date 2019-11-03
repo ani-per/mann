@@ -50,11 +50,8 @@ end
 
 % Laplacian
 L = D - A; % Generate L
-systems(sim_count).L = L;
-
 % Hash generation for L
 L_hash = GetMD5(L);
-systems(sim_count).L_hash = L_hash;
 
 % Simulation
 depict = true;
@@ -62,10 +59,12 @@ t_range = [0, 10];
 xbounds = [0, 10];
 
 for i = 1:num_runs
-    [T, X] = simulate(@local_protocol, L, t_range, L_hash, xbounds, depict, i, colors, fig_size, font_size);
+    systems(sim_count).L = L;
+    systems(sim_count).L_hash = L_hash;
+    [T, X] = simulate(@local_protocol, L, t_range, L_hash, depict, xbounds, i, colors, fig_size, font_size);
     systems(sim_count).X = X;
-    inc(sim_count);
+    sim_count = inc(sim_count);
 end
-inc(L_count);
+L_count = inc(L_count);
 
 toc
