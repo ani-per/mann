@@ -8,7 +8,7 @@ set(0, 'DefaultAxesGridAlpha', 0.35)
 fig_size = [50 50 600 300]; fig_count = 1; p_count = 1; font_size = 17.5;
 
 % Parameters of simulation
-num_runs = 2; % Counter of number of simulations for each L matrix
+num_runs = 1; % Counter of number of simulations for each L matrix
 depict = false; % Plot the results for each individual simulation
 
 for n = 2:4 % Number of nodes, lower limit 2 and upper limit 5 (for now)
@@ -55,7 +55,19 @@ for n = 2:4 % Number of nodes, lower limit 2 and upper limit 5 (for now)
         mkdir(root);
     end
     save(fullfile(root, "sims_" + n + "_nodes_" + sim_count + "_sims" + ".mat"), 'sims')
+    
+    % For hashing:
+    L_keys = cellstr(vertcat(sims(:).L_hash));
+    L_vals = cat(3, sims(:).L);
+    root = fullfile(pwd, "hash", "local_consensus", n + "_nodes");
+    if (~exist(root, 'dir'))
+        mkdir(root);
+    end
+    save(fullfile(root, "hash_" + n + "_nodes_" + sim_count + "_sims" + ".mat"), 'sims')
+    
     % Import into R? https://stackoverflow.com/q/28080579
+    % Hashing in Matlab: https://stackoverflow.com/a/3592050
+    % Hashing in R: hashmap, https://stackoverflow.com/a/46069560
 end
 
 toc
