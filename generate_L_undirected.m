@@ -8,7 +8,12 @@ function L_list = generate_L_undirected(n)
     [ind_i, ind_j, ~] = meshgrid(1:n, 1:n, 1:(2^m - ignore));
     A_list(ind_i > ind_j) = offdiags.';
     A_list = A_list + permute(A_list, [2 1 3]);
-    % Remove all Laplacians that have at least one all-zero row (i.e. at least one disconnected node)
+    % Remove all Laplacians that have at least one all-zero row (i.e. at least one individually disconnected node)
     A_list = A_list(:, :, all(any(A_list, 2)));
     L_list = eye(n).*sum(A_list) - A_list;
+    % Do some more processing?
+    % i.e., remove all non-connected graphs? Test if second-smallest
+    % eigenvalue is 0.
+    % https://en.wikipedia.org/wiki/Algebraic_connectivity (Fiedler
+    % eigenvalue)
 end

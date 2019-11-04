@@ -8,10 +8,12 @@ set(0, 'DefaultAxesGridAlpha', 0.35)
 fig_size = [50 50 600 300]; fig_count = 1; p_count = 1; font_size = 17.5;
 
 % Parameters of simulation
-num_runs = 1; % Counter of number of simulations for each L matrix
-depict = false; % Plot the results for each individual simulation
+num_runs = 4; % Counter of number of simulations for each L matrix
+depict = true; % Plot the results for each individual simulation
 
-for n = 2:4 % Number of nodes, lower limit 2 and upper limit 5 (for now)
+for n = 2:4 % Number of nodes, lower limit 2 and upper limit 5 (for now),
+            % as 6+ have many more unique Laplacians and hence require much
+            % more memory/time to run
     disp("n: " + n); % Track progress in L
     sim_count = 1; % Counter of number of individual simulations
     L_count = 1; % Counter of number of unique L matrices generated
@@ -35,7 +37,7 @@ for n = 2:4 % Number of nodes, lower limit 2 and upper limit 5 (for now)
         t_range = [0:0.05:10];
         xbounds = [0, 10];
 
-        for i = 1:num_runs
+        for j = 1:num_runs
             sims(sim_count).L = L;
             sims(sim_count).L_hash = L_hash;
 
@@ -43,27 +45,29 @@ for n = 2:4 % Number of nodes, lower limit 2 and upper limit 5 (for now)
             disp("Sim " + sim_count + "/" + sim_count_total);
 
             % Simulate
-            [T, X] = simulate(@local_protocol, L, t_range, L_hash, depict, xbounds, i, colors, fig_size, font_size);
+            [T, X] = simulate(@local_protocol, L, t_range, L_hash, depict, xbounds, j, colors, fig_size, font_size);
             sims(sim_count).X = X;
             sim_count = inc(sim_count);
         end
         L_count = inc(L_count);
     end
+    sim_count = sim_count - 1;
 
+    % Save results of simulations
     root = fullfile(pwd, "data", "local_consensus", n + "_nodes");
     if (~exist(root, 'dir'))
         mkdir(root);
     end
     save(fullfile(root, "sims_" + n + "_nodes_" + sim_count + "_sims" + ".mat"), 'sims')
     
-    % For hashing:
-    L_keys = cellstr(vertcat(sims(:).L_hash));
+    % Save hashes and corresponding Laplacians for hashing in R
+    L_keys = vertcat(sims(:).L_hash);
     L_vals = cat(3, sims(:).L);
-    root = fullfile(pwd, "hash", "local_consensus", n + "_nodes");
+    root = fullfile(pwd, "hash", "keys_vals", "local_consensus", n + "_nodes");
     if (~exist(root, 'dir'))
         mkdir(root);
     end
-    save(fullfile(root, "hash_" + n + "_nodes_" + sim_count + "_sims" + ".mat"), 'sims')
+    save(fullfile(root, "hash_" + n + "_nodes_" + sim_count + "_sims" + ".mat"), 'L_keys', 'L_vals')
     
     % Import into R? https://stackoverflow.com/q/28080579
     % Hashing in Matlab: https://stackoverflow.com/a/3592050
