@@ -9,9 +9,9 @@ fig_size = [50 50 600 300]; fig_count = 1; p_count = 1; font_size = 17.5;
 
 % Parameters of simulation
 num_runs = 4; % Counter of number of simulations for each L matrix
-depict = true; % Plot the results for each individual simulation
+depict = false; % Plot the results for each individual simulation
 
-for n = 2:4 % Number of nodes, lower limit 2 and upper limit 5 (for now),
+for n = 2:5 % Number of nodes, lower limit 2 and upper limit 5 (for now),
             % as 6+ have many more unique Laplacians and hence require much
             % more memory/time to run
     disp("n: " + n); % Track progress in L
