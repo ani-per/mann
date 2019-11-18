@@ -10,8 +10,9 @@ fig_size = [50 50 600 300]; fig_count = 1; p_count = 1; font_size = 17.5;
 % Parameters of simulation
 num_runs = 4; % Counter of number of simulations for each L matrix
 depict = false; % Plot the results for each individual simulation
+save_ind = false; % Save the results for each individual simulation in csv files
 
-for n = 2:5 % Number of nodes, lower limit 2 and upper limit 5 (for now),
+for n = 2:4 % Number of nodes, lower limit 2 and upper limit 5 (for now),
             % as 6+ have many more unique Laplacians and hence require much
             % more memory/time to run
     disp("n: " + n); % Track progress in L
@@ -27,7 +28,6 @@ for n = 2:5 % Number of nodes, lower limit 2 and upper limit 5 (for now),
     sims = repmat(struct('L', [], 'L_hash', [], 'X', []), 1, sim_count_total);
 
     for i = 1:size(L_list, 3)
-
         % Hash generation for L
         L = L_list(:, :, i);
         L_hash = GetMD5(L);
@@ -48,12 +48,20 @@ for n = 2:5 % Number of nodes, lower limit 2 and upper limit 5 (for now),
             [T, X] = simulate(@local_protocol, L, t_range, L_hash, depict, xbounds, j, colors, fig_size, font_size);
             sims(sim_count).X = X;
             sim_count = inc(sim_count);
+            
+            if (save_ind)
+                root = fullfile(pwd, "data", "local_consensus", n + "_nodes", "ind");
+                if (~exist(root, 'dir'))
+                    mkdir(root);
+                end
+                writematrix(X, fullfile(root, "sims_" + n + "_nodes_" + "L_" + L_hash + "_" + int2str(j) + ".csv"))
+            end
         end
         L_count = inc(L_count);
     end
     sim_count = sim_count - 1;
 
-    % Save results of simulations
+    % Save total results of simulations
     root = fullfile(pwd, "data", "local_consensus", n + "_nodes");
     if (~exist(root, 'dir'))
         mkdir(root);

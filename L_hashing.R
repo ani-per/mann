@@ -1,10 +1,16 @@
 pacman::p_load(tidyverse, magrittr, tictoc, stringr, glue, R.matlab, filenamer)
 
 tic("Entirety")
-hash_filenames = "{getwd()}/hash/keys_vals/" %>% glue() %>%
-   list.files(full.names = TRUE, recursive = TRUE) %>% str_subset("2_nodes", negate = TRUE)
-hash_filenames_trimmed = "{getwd()}/hash/keys_vals/" %>% glue() %>%
-   list.files(full.names = FALSE, recursive = TRUE) %>% str_subset("2_nodes", negate = TRUE)
+hash_filenames <- "{getwd()}/hash/keys_vals/" %>% glue() %>%
+   list.files(full.names = TRUE, recursive = TRUE)
+hash_filenames_trimmed <- "{getwd()}/hash/keys_vals/" %>% glue() %>%
+   list.files(full.names = FALSE, recursive = TRUE)
+
+test <- FALSE
+if (test) {
+   hash_filenames <- hash_filenames %>% str_subset("2_nodes", negate = TRUE)
+   hash_filenames_trimmed <- hash_filenames_trimmed %>% str_subset("2_nodes", negate = TRUE)
+}
 
 for (i in 1:length(hash_filenames)) {
    hash_filenames_trimmed[i] %>% tic()
@@ -20,10 +26,10 @@ for (i in 1:length(hash_filenames)) {
       str_replace("keys_vals", "hashes")
    RDS_filename %>% make_path()
    saveRDS(L_hash, RDS_filename)
-   # hash_filenames_trimmed[i] %>%
-   #    trim_ext() %>% set_fext("rds") %>%
-   #    str_replace("keys_vals", "hashes") %>%
-   #    print()
+   hash_filenames_trimmed[i] %>%
+      trim_ext() %>% set_fext("rds") %>%
+      str_replace("keys_vals", "hashes") %>%
+      cat(sep = "\n")
    toc()
 }
 rm(i, j)
