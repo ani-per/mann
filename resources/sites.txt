@@ -1,0 +1,11 @@
+https://hmkcode.com/ai/backpropagation-step-by-step/
+
+http://neuralnetworksanddeeplearning.com/chap1.html
+
+https://machinelearningmastery.com/implement-backpropagation-algorithm-scratch-python/
+
+https://medium.com/datathings/neural-networks-and-backpropagation-explained-in-a-simple-way-f540a3611f5e
+
+https://towardsdatascience.com/forward-propagation-in-neural-networks-simplified-math-and-code-version-bbcfef6f9250
+
+https://ml-cheatsheet.readthedocs.io/en/latest/forwardpropagation.html

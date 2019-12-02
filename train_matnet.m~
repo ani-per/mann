@@ -1,0 +1,38 @@
+% function train_matnet(X_sims, L_target, h_layer, learning_rate, num_epochs)
+    % Initialize connection weights
+    for (k = 1:(length(h_layer.num_neurons) - 1))
+        U{k} = cell([h_layer.dimensions.U(k, :), h_layer.num_neurons(k), h_layer.num_neurons(k + 1)]);
+        V{k} = cell([h_layer.dimensions.V(k, :), h_layer.num_neurons(k), h_layer.num_neurons(k + 1)]);
+        B{k} = cell([h_layer.dimensions.B(k, :), h_layer.num_neurons(k), h_layer.num_neurons(k + 1)]);
+        N{k} = cell([h_layer.dimensions.B(k, :), h_layer.num_neurons(k), h_layer.num_neurons(k + 1)]);
+        H{k} = cell([h_layer.dimensions.B(k, :), h_layer.num_neurons(k), h_layer.num_neurons(k + 1)]);
+        for (j = 1:h_layer.num_neurons(k + 1))
+            for (i = 1:h_layer.num_neurons(k))
+                U{1, k}(:, :, i, j) = num2cell(randn(h_layer.dimensions.U(k, :)));
+                V{1, k}(:, :, i, j) = num2cell(randn(h_layer.dimensions.V(k, :)));
+                B{1, k}(:, :, i, j) = num2cell(randn(h_layer.dimensions.B(k, :)));
+            end
+        end
+    end
+    % k : layer number
+    % j : neuron number
+    % i : local weight number
+    
+    % Multiplication of U, V, and X:
+    % mtimesx(mtimesx(U, X_sims), permute(V, [2 1 3]))
+    % mtimesx(mtimesx(U, X_sims), V');x
+%     for (k = 1:size(X_sims, 3))
+%         
+%     end
+    % for (n = 1:(size(X_sims, 3)))
+    for (n = 1:1)
+        for (j = 1:h_layer.num_neurons(2))
+            N{1, 1}(:, :, :, j) = m2c(mtimesx(mtimesx(c2m(U{1, 1}(:, :, :, j)), X_sims(:, :, n)), t3(c2m(V{1, 1}(:, :, :, j)))));
+            H{1, 1}(:, :, :, j) = m2c(sigmoid(c2m(N{1, 1}(:, :, :, j))));
+        end
+        for (k = 2:(length(h_layer.num_neurons) - 1))
+            N{1, k}(:, :, :, j) = m2c(mtimesx(mtimesx(c2m(U{1, k}(:, :, :, j)), H{1(:, :, n)), t3(c2m(V{1, k}(:, :, :, j)))));
+        end
+    end
+    % for (k = 1:(length(h_layer.num_neurons) - 1))
+% end

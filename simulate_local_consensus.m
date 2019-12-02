@@ -72,7 +72,7 @@ for n = 2:5 % Number of nodes, lower limit 2 and upper limit 5 (for now),
     smart_mkdir(root);
     save(fullfile(root, "hash_" + n + "_nodes_" + sim_count + "_sims" + ".mat"), 'L_keys', 'L_vals')
     
-    % Construct feature and target matrices from simulations
+    % Construct vectorized feature and target matrices from simulations
     all_x = cat(3, sims(:).X);
     feature = permute(reshape(all_x, 1, size(all_x, 1)*size(all_x, 2), size(all_x, 3)), [3 2 1]);
     feature = feature./max(feature, [], 2);
