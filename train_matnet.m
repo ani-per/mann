@@ -1,4 +1,5 @@
 % function train_matnet(X_sims, L_target, layers, lr, num_epochs)
+tic;
 
 % k : layer number
 % j : neuron number
@@ -13,7 +14,7 @@ error = zeros(1, num_epochs);
 % Array for storing predicted L for each batch
 L_hat = zeros(size(L_target));
 
-for (n = 1:30)
+for (n = 1:dataset_length)
     if (n == 1) % Setup network structure if we're using the first training batch
         % Initialize connection weights
         U = cell(1, num_hidden);
@@ -96,5 +97,6 @@ for (n = 1:30)
         end
     end
 end
-    
+
+toc;
 % end

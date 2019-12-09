@@ -10,9 +10,9 @@ fig_size = [50 50 600 300]; fig_count = 1; p_count = 1; font_size = 17.5;
 sim_file = '/Users/ap/Documents/AP/APCOLLEGE/Academics/Graduate_School/Research/MultiAgent_NeuralNets/data/local_consensus/4_nodes/sims/sims_4_nodes_760_sims.mat';
 load(sim_file);
 [X_sims, L_target] = extract_data(sims);
+num_ = size(X_sims, 3);
 assert(size(X_sims, 3) == size(L_target, 3));
-dataset_length = size(X_sims, 3);
-seq = randperm(dataset_length);
+seq = randperm(size(X_sims, 3));
 X_sims = X_sims(:, :, seq);
 L_target = L_target(:, :, seq);
 
