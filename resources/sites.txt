@@ -9,3 +9,15 @@ https://medium.com/datathings/neural-networks-and-backpropagation-explained-in-a
 https://towardsdatascience.com/forward-propagation-in-neural-networks-simplified-math-and-code-version-bbcfef6f9250
 
 https://ml-cheatsheet.readthedocs.io/en/latest/forwardpropagation.html
+
+https://towardsdatascience.com/backpropagation-in-a-convolutional-layer-24c8d64d8509
+
+http://www.shivambansal.com/blog/neural_network_2/
+
+http://www.ee.bgu.ac.il/~haimp/ml/lectures/lec4/lec4.pdf
+
+https://datascience.stackexchange.com/questions/23486/proper-derivation-of-dz1-expression-for-backpropagation-algorithm
+
+https://stats.stackexchange.com/questions/414825/how-exactly-is-the-error-backpropagated-in-backpropagation
+
+https://stats.stackexchange.com/questions/278031/confusion-about-backpropagation-matrix-dimensions

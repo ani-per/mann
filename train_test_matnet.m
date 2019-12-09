@@ -12,6 +12,7 @@ load(sim_file);
 [X_sims, L_target] = extract_data(sims);
 
 num_epochs = 1000; % Maximum number of iterations for training
+lr = 0.09; % Learning rate
 
 % Structure of hidden arrays
 

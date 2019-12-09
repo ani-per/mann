@@ -4,11 +4,11 @@ tic
 close all; clear colors L_list sims;
 set(0, 'DefaultFigureVisible', 'off');
 set(0, 'DefaultFigureColor', [1 1 1]);
-set(0, 'DefaultAxesGridAlpha', 0.35)
+set(0, 'DefaultAxesGridAlpha', 0.35);
 fig_size = [50 50 600 300]; fig_count = 1; p_count = 1; font_size = 17.5;
 
 % Parameters of simulation
-num_runs = 20; % Counter of number of simulations for each L matrix
+num_runs = 30; % Counter of number of simulations for each L matrix
 depict = false; % Plot the results for each individual simulation
 save_ind = false; % Save the results for each individual simulation in csv files
 timestep = 0.125; % Timestep for ODE 45 integration
