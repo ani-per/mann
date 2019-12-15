@@ -16,14 +16,21 @@ seq = randperm(dataset_length);
 X_sims = X_sims(:, :, seq);
 L_target = L_target(:, :, seq);
 
-num_epochs = 1000; % Maximum number of iterations for training
-lr = 0.09; % Learning rate
+num_epochs = 10; % Maximum number of iterations for training
+lr = 0.50; % Learning rate
+tolerance = 0.5; % Error tolerance
 
 % Structure of hidden arrays
-
-layers.num_neurons = [1; 10; 6; 1];
+layers.num_neurons = [1; 20; 10; 1];
 layers.dimensions.U = [size(L_target, 1), size(X_sims, 1); size(L_target, 1), size(L_target, 1); size(L_target, 1), size(L_target, 1)];
 layers.dimensions.V = [size(L_target, 2), size(X_sims, 2); size(L_target, 2), size(L_target, 2); size(L_target, 2), size(L_target, 2)];
 layers.dimensions.B = [size(L_target, 1), size(X_sims, 2); size(L_target, 1), size(L_target, 2); size(L_target, 2), size(L_target, 2)];
+
+% Range of each weight array after initialization
+rand_dim = [-1, 1];
+
+% Create MatNet
+my_matnet = MatNet(layers, rand_dim);
+my_matnet.train_batch(X_sims, L_target, lr, num_epochs, tolerance);
 
 toc

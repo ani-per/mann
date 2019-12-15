@@ -6,9 +6,6 @@ tic;
 % i : local weight number
 num_hidden = length(layers.num_neurons) - 1;
 
-% Range of each weight array after initialization
-rand_dim = [-1, 1];
-
 % Array for storing loss at each epoch
 error = zeros(1, num_epochs);
 % Array for storing predicted L for each batch
