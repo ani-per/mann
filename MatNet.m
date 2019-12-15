@@ -27,6 +27,7 @@ classdef MatNet < handle
         
     end
     methods
+        % Constructor
         function obj = MatNet(layers, rand_dim)
             obj.epoch = 0;
             obj.layers = layers;
@@ -75,10 +76,12 @@ classdef MatNet < handle
             obj.L_hat = {};
         end
         
+        % Reset Epoch to 0
         function reset_epoch(obj)
             obj.epoch = 0;
         end
         
+        % Reset training results
         function reset(obj)
             obj.epoch = 0;
             obj.error_raw = {};
@@ -88,24 +91,26 @@ classdef MatNet < handle
             obj.L_hat = {};
         end
         
+        % Train network using feature matrix X_sims and target matrix L_target
+        % Currently using stochastic gradient descent
         function train(obj, X_sims, L_target, lr)
-%             if (obj.epoch > 0 && any(cellfun('isempty', obj.error_raw{obj.epoch})))
-%                 obj.reset
-%             end
+            %  if (obj.epoch > 0 && any(cellfun('isempty', obj.error_raw{obj.epoch})))
+            %      obj.reset
+            %  end
             assert(size(X_sims, 3) == size(L_target, 3));
             dataset_length = size(X_sims, 3);
             obj.epoch = obj.epoch + 1;
             
+            obj.L_hat{obj.epoch} = cell(size(L_target));
             obj.error_raw{obj.epoch} = cell(dataset_length, 1);
             obj.error_ripe{obj.epoch} = cell(dataset_length, 1);
-            obj.L_hat{obj.epoch} = cell(size(L_target));
             
             tic
             for (batch = 1:25)
                 % Initialize zeroeth layer neuron outputs to be training input
                 obj.H{1, 1} = m2c(X_sims(:, :, batch));
 
-                % Forward pass through hidden obj.layers
+                % Forward pass through hidden layers
                 for (k = 1:obj.num_hidden)
                     for (j = 1:obj.layers.num_neurons(k + 1))
                         obj.N{1, k + 1}(:, :, j) = m2c(sum((mtimesx(mtimesx(c2m(obj.U{1, k}(:, :, :, j)), c2m(obj.H{1, k}(:, :, :))), ...
@@ -113,11 +118,15 @@ classdef MatNet < handle
                         obj.H{1, k + 1}(:, :, j) = m2c(sigmoid(c2m(obj.N{1, k + 1}(:, :, j))));
                     end
                 end
+                
+                % Target prediction
                 obj.L_hat{obj.epoch}(:, :, batch) = obj.N{1, obj.num_hidden + 1};
+                
                 % Calculate error of prediction (MSE with Frobenius norm) before rounding
                 obj.error_raw{obj.epoch}(batch) = m2c(se_frob(c2m(obj.L_hat{obj.epoch}(:, :, batch)), L_target(:, :, batch)));
                 obj.error_ripe{obj.epoch}(batch) = m2c(se_frob(round(c2m(obj.L_hat{obj.epoch}(:, :, batch))), L_target(:, :, batch)));
 
+                % Backpropagate error from output layer to penultimate hidden layer
                 for (j = 1:obj.layers.num_neurons(obj.num_hidden + 1))
                     for (i = 1:obj.layers.num_neurons(obj.num_hidden))
                         obj.delta{1, obj.num_hidden}(:, :, i, j) = m2c((c2m(obj.H{1, obj.num_hidden + 1}) - ...
@@ -129,7 +138,8 @@ classdef MatNet < handle
                         obj.dB{1, obj.num_hidden}(:, :, i, j) = obj.delta{1, obj.num_hidden}(:, :, i, j);
                     end
                 end
-
+                
+                % Backpropagate from penultimate hidden layer to first hidden layer
                 for (k = (obj.num_hidden - 1):-1:1)
                     for (j = 1:obj.layers.num_neurons(k + 1))
                         for (i = 1:obj.layers.num_neurons(k))
@@ -143,6 +153,7 @@ classdef MatNet < handle
                     end
                 end
 
+                % Update weights using stochastic gradient descent with constant learning rate
                 for (k = (obj.num_hidden):-1:1)
                     for (j = 1:obj.layers.num_neurons(k + 1))
                         for (i = 1:obj.layers.num_neurons(k))
@@ -153,12 +164,15 @@ classdef MatNet < handle
                     end
                 end
                 
+                % Calculate the "raw" (unrounded) and "ripe" (rounded) error for the batch
                 obj.now_error_raw(obj.epoch) = mean(c2m(obj.error_raw{obj.epoch}));
                 obj.now_error_ripe(obj.epoch) = mean(c2m(obj.error_ripe{obj.epoch}));
             end
             toc
         end
         
+        % Train over epochs
+        % End when either max. epochs is reached or tolerance is met
         function train_batch(obj, X_sims, L_target, lr, num_epochs, tolerance)
             if (obj.epoch == 0)
                 obj.train(X_sims, L_target, lr)
@@ -171,6 +185,37 @@ classdef MatNet < handle
                 disp(obj.epoch)
                 disp(obj.now_error_raw(obj.epoch))
                 disp(obj.now_error_ripe(obj.epoch))
+            end
+        end
+        
+        function [test_L_hat, test_error_raw, test_error_ripe] = test(obj, X_sims, L_target)
+            assert(size(X_sims, 3) == size(L_target, 3));
+            dataset_length = size(X_sims, 3);
+            
+            test_L_hat = zeros(size(L_target));
+            test_error_raw = zeros(dataset_length, 1);
+            test_error_ripe = zeros(dataset_length, 1);
+            
+            for (batch = 1:20)
+                % Initialize zeroeth layer neuron outputs to be training input
+                obj.H{1, 1} = m2c(X_sims(:, :, batch));
+
+                % Forward pass through hidden layers
+                for (k = 1:obj.num_hidden)
+                    for (j = 1:obj.layers.num_neurons(k + 1))
+                        obj.N{1, k + 1}(:, :, j) = m2c(sum((mtimesx(mtimesx(c2m(obj.U{1, k}(:, :, :, j)), c2m(obj.H{1, k}(:, :, :))), ...
+                            t3(c2m(obj.V{1, k}(:, :, :, j)))) + c2m(obj.B{1, k}(:, :, :, j))), 3));
+                        obj.H{1, k + 1}(:, :, j) = m2c(sigmoid(c2m(obj.N{1, k + 1}(:, :, j))));
+                    end
+                end
+                
+                % Target prediction
+                test_L_hat(:, :, batch) = c2m(obj.N{1, obj.num_hidden + 1});
+                
+                % Calculate error of prediction (MSE with Frobenius norm) before rounding
+                
+                test_error_raw(batch) = se_frob(test_L_hat(:, :, batch), L_target(:, :, batch));
+                test_error_ripe(batch) = se_frob(round(test_L_hat(:, :, batch)), L_target(:, :, batch));
             end
         end
     end
