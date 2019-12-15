@@ -106,7 +106,7 @@ classdef MatNet < handle
             obj.error_ripe{obj.epoch} = cell(dataset_length, 1);
             
             tic
-            for (batch = 1:dataset_length)
+            for (batch = 1:25)
                 % Initialize zeroeth layer neuron outputs to be training input
                 obj.H{1, 1} = m2c(X_sims(:, :, batch));
 
@@ -196,7 +196,7 @@ classdef MatNet < handle
             test_error_raw = zeros(dataset_length, 1);
             test_error_ripe = zeros(dataset_length, 1);
             
-            for (batch = 1:dataset_length)
+            for (batch = 1:20)
                 % Initialize zeroeth layer neuron outputs to be training input
                 obj.H{1, 1} = m2c(X_sims(:, :, batch));
 
@@ -221,12 +221,16 @@ classdef MatNet < handle
         function error_vector = error_vector(obj, error_type)
             if strcmp(error_type, 'raw')
                 error_vals = transpose(c2m(cat(3, [obj.error_raw{:}])));
+                hist_ylabel = 'Raw (Unrounded) Error';
+                hist_title = {"Error Histogram"; 'Raw (Unrounded) Error'};
             elseif strcmp(error_type, 'ripe')
+                hist_ylabel = 'Error After Rounding';
+                hist_title = {"Error Histogram"; 'Error After Rounding'};
                 error_vals = transpose(c2m(cat(3, [obj.error_ripe{:}])));
             end
             error_vector = zeros(numel(error_vals), 2);
             for (i = 1:size(error_vals, 1))
-                error_vector((1 + (i - 1)*size(error_vals, 2)):((i)*size(error_vals, 2)), :) = ...
+                error_vector((1 + (i - 1)*size(error_vals, 2)):((i)*size(error_vals,2)), :) = ...
                     [repelem(i, size(error_vals, 2)); (error_vals(i, :))]';
             end
         end

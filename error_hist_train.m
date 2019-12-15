@@ -1,0 +1,37 @@
+function error_hist_train(error_vector, error_type, num_bins, fig_size, font_size)
+        if strcmp(error_type, 'raw')
+            hist_ylabel = 'Error Before Rounding';
+            hist_title = {"Train Error Histogram"; 'Error Before Rounding'};
+        elseif strcmp(error_type, 'ripe')
+            hist_ylabel = 'Error After Rounding';
+            hist_title = {"Train Error Histogram"; 'Error After Rounding'};
+        end
+        h = figure();
+        h.Position = fig_size;
+        [N, C] = hist3(error_vector, [max(error_vector(:, 1)), num_bins]);
+        imagesc(1:1:max(error_vector(:, 1)), C{2}, N');
+        colormap(jet);
+        cb = colorbar;
+        set(gca, 'YDir', 'normal');
+        set(gca, 'FontSize', font_size*0.75);
+        xlim([0 max(error_vector(:, 1))] + 0.5);
+        xticks(1:max(error_vector(:, 1)));
+        y_ticks = linspace(min(error_vector(:, 2)), max(error_vector(:, 2)), length(C{2}) + 1);
+        yticks(y_ticks(2:3:end));
+        ytickformat('%.1f');
+        hold on;
+        g_y = y_ticks;
+        g_x = (0:1:(max(error_vector(:, 1)) + 0.5)) + 0.5;
+        for i = 2:length(g_x) - 1
+           plot([g_x(i) g_x(i)], [g_y(1) g_y(end)], 'k', 'LineWidth', 1.75)
+        end
+        for i = 2:length(g_y) - 1
+           plot([g_x(1) g_x(end)], [g_y(i) g_y(i)], 'k', 'LineWidth', 1.75)
+        end
+        set(cb, 'XTickLabel', sprintfc('%0.0f%%', (100*(get(cb, 'XTick')/sum(error_vector(:, 1) == 1)))))
+        xlabel('Epoch', 'Interpreter', 'Latex', 'FontSize', font_size);
+        ylabel(hist_ylabel, 'Interpreter', 'Latex', 'FontSize', font_size);
+        title(hist_title, 'Interpreter', 'Latex', 'FontSize', font_size*1.25);
+        export_fig(strcat('./figs/train_error_histogram_', error_type, '.png'), '-nocrop');
+        close(h);
+end
