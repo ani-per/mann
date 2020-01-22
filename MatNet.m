@@ -116,7 +116,11 @@ classdef MatNet < handle
             obj.error_real{obj.epoch} = cell(dataset_length, 1);
             
             tic
+            fprintf('\tBatch: ');
             for (batch = 1:dataset_length)
+                if (mod(batch, floor(dataset_length/4)) == 0)
+                    fprintf('%.1f%%; ', 25*round((batch/dataset_length)/(0.25)));
+                end
                 % Initialize zeroeth layer neuron outputs to be training input
                 obj.H{1, 1} = m2c(X_sims(:, :, batch));
 
@@ -188,6 +192,7 @@ classdef MatNet < handle
                 obj.now_error_ripe(obj.epoch) = mean(c2m(obj.error_ripe{obj.epoch}));
                 obj.now_error_real(obj.epoch) = mean(c2m(obj.error_real{obj.epoch}));
             end
+            fprintf('\n\t');
             toc
         end
         
@@ -195,18 +200,18 @@ classdef MatNet < handle
         % End when either max. epochs is reached or tolerance is met
         function train_batch(obj, X_sims, L_target, lr, num_epochs, tolerance)
             if (obj.epoch == 0)
+                fprintf('---\nEpoch %d:\n', obj.epoch)
                 obj.train(X_sims, L_target, lr)
-                disp(obj.epoch)
-                disp(obj.now_error_raw(obj.epoch))
-                disp(obj.now_error_ripe(obj.epoch))
-                disp(obj.now_error_real(obj.epoch))
+                fprintf('\tRaw error: %f\n', obj.now_error_raw(obj.epoch))
+                fprintf('\tRipe error: %f\n', obj.now_error_ripe(obj.epoch))
+                fprintf('\tReal error: %f\n', obj.now_error_real(obj.epoch))
             end
             while (obj.epoch <= (num_epochs - 1) && abs(obj.now_error_ripe(obj.epoch)) > tolerance)
+                fprintf('---\nEpoch %d:\n', obj.epoch)
                 obj.train(X_sims, L_target, lr)
-                disp(obj.epoch)
-                disp(obj.now_error_raw(obj.epoch))
-                disp(obj.now_error_ripe(obj.epoch))
-                disp(obj.now_error_real(obj.epoch))
+                fprintf('\tRaw error: %f\n', obj.now_error_raw(obj.epoch))
+                fprintf('\tRipe error: %f\n', obj.now_error_ripe(obj.epoch))
+                fprintf('\tReal error: %f\n', obj.now_error_real(obj.epoch))
             end
         end
         

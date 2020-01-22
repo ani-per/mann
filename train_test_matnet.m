@@ -6,12 +6,12 @@ close all; clear sims;
 set(0, 'DefaultFigureVisible', 'off');
 set(0, 'DefaultFigureColor', [1 1 1]);
 set(0, 'DefaultAxesGridAlpha', 0.65);
-fig_size = [50 50 1800 1500]; fig_count = 1; font_size = 30;
+fig_size = [50 50 700 700]; fig_count = 1; font_size = 20;
 
 %% Train/Test Dataset Setup
 % Set number of nodes and number of sims
 num_nodes = 4;
-num_sims = 1140;
+num_sims = 190;
 sim_file = ...
     fullfile(pwd, 'data', 'local_consensus', ...
     sprintf('%d_nodes', num_nodes), 'sims', sprintf('sims_%d_nodes_%d_sims.mat', num_nodes, num_sims));
@@ -47,14 +47,13 @@ rand_dim = [-1, 1];
 mn = MatNet(layers, rand_dim);
 
 %% MatNet Training Parameters
-num_epochs = 5; % Maximum number of iterations for training
+num_epochs = 2; % Maximum number of iterations for training
 lr = 0.75; % Learning rate
 tolerance = 0.5; % Error tolerance
-num_bins = 30; % Number of bins for error histograms
+num_bins = 50; % Number of bins for error histograms
 
 %% Training
 % Train MatNet
-disp('Training ...');
 mn.train_batch(X_sims_train, L_target_train, lr, num_epochs, tolerance);
 
 %% Training Results
@@ -72,9 +71,8 @@ error_hist_train(error_vector_train, 'real', num_bins, fig_size, font_size, num_
 
 %% Testing Results
 % Histogram of the test error
-error_hist_test(test_error_raw(test_error_raw >= 0), 'raw', num_bins, [50 50 700 700], font_size/1.5, num_nodes, num_sims);
-error_hist_test(test_error_ripe(test_error_ripe >= 0), 'ripe', num_bins, [50 50 700 700], font_size/1.5, num_nodes, num_sims);
-error_hist_test(test_error_real(test_error_real >= 0), 'real', num_bins, [50 50 700 700], font_size/1.5, num_nodes, num_sims);
+error_hist_test(test_error_raw(test_error_raw >= 0), 'raw', num_bins, fig_size, font_size, num_nodes, num_sims);
+error_hist_test(test_error_ripe(test_error_ripe >= 0), 'ripe', num_bins, fig_size, font_size, num_nodes, num_sims);
+error_hist_test(test_error_real(test_error_real >= 0), 'real', num_bins, fig_size, font_size, num_nodes, num_sims);
 
 %% End Matter
-toc
