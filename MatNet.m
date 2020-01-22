@@ -1,7 +1,7 @@
 classdef MatNet < handle
     properties
         epoch % Counter of number of times the network has been trained with one data set
-        layers % Structure containing sizees and corresponding dimensions of layers
+        layers % Structure containing sizes and corresponding dimensions of layers
         num_hidden % Number of hidden layers; output layer considered a hidden layer
         
         % Connection Weights
@@ -19,11 +19,14 @@ classdef MatNet < handle
         dV
         dB
         
-        L_hat % Target Matrix
+        L_hat % Neural network output: calculated target Laplacian matrix
+        L_hat_valid % "Closest" valid Laplacian to L_hat
         error_raw % Array of Frobenius-normed error for each batch at each epoch before rounding
         now_error_raw % Most recent batch Frobenius-normed error before rounding
         error_ripe % Array of Frobenius-normed error for each batch at each epoch after rounding
         now_error_ripe % Most recent batch Frobenius-normed error after rounding
+        error_real % Array of Frobenius-normed error for each batch at each epoch after jumping to the nearest valid Laplacian
+        now_error_real % Most recent batch Frobenius-normed error after jumping to the nearest valid Laplacian
         
     end
     methods
@@ -69,11 +72,14 @@ classdef MatNet < handle
             % Array for storing error at each epoch
             obj.error_raw = {};
             obj.error_ripe = {};
+            obj.error_real = {};
             % Error of most recent batch of most recent epoch
             obj.now_error_raw = [1e5];
             obj.now_error_ripe = [1e5];
+            obj.now_error_real = [1e5];
             % Array for storing predicted L for each batch
             obj.L_hat = {};
+            obj.L_hat_valid = {};
         end
         
         % Reset Epoch to 0
@@ -86,9 +92,12 @@ classdef MatNet < handle
             obj.epoch = 0;
             obj.error_raw = {};
             obj.error_ripe = {};
+            obj.error_real = {};
             obj.now_error_raw = [];
             obj.now_error_ripe = [];
+            obj.now_error_real = [];
             obj.L_hat = {};
+            obj.L_hat_valid = {};
         end
         
         % Train network using feature matrix X_sims and target matrix L_target
@@ -104,6 +113,7 @@ classdef MatNet < handle
             obj.L_hat{obj.epoch} = cell(size(L_target));
             obj.error_raw{obj.epoch} = cell(dataset_length, 1);
             obj.error_ripe{obj.epoch} = cell(dataset_length, 1);
+            obj.error_real{obj.epoch} = cell(dataset_length, 1);
             
             tic
             for (batch = 1:dataset_length)
@@ -125,6 +135,15 @@ classdef MatNet < handle
                 % Calculate error of prediction (MSE with Frobenius norm) before and after rounding
                 obj.error_raw{obj.epoch}(batch) = m2c(se_frob(c2m(obj.L_hat{obj.epoch}(:, :, batch)), L_target(:, :, batch)));
                 obj.error_ripe{obj.epoch}(batch) = m2c(se_frob(round(c2m(obj.L_hat{obj.epoch}(:, :, batch))), L_target(:, :, batch)));
+                L_list = generate_L_undirected(size(L_target, 1));
+                L_error_real = zeros(size(L_list, 3), 1);
+                for (m = 1:size(L_list, 3))
+                    L_error_real(m, 1) = se_frob(L_list(:, :, m), c2m(obj.L_hat{obj.epoch}(:, :, batch)));
+                end
+                [~, L_hat_valid_ind] = min(L_error_real);
+                % L_error_real
+                obj.L_hat_valid{obj.epoch}(:, :, batch) = L_list(:, :, L_hat_valid_ind);
+                obj.error_real{obj.epoch}(batch) = m2c(se_frob(obj.L_hat_valid{obj.epoch}(:, :, batch), L_target(:, :, batch)));
 
                 % Backpropagate error from output layer to penultimate hidden layer
                 for (j = 1:obj.layers.num_neurons(obj.num_hidden + 1))
@@ -167,6 +186,7 @@ classdef MatNet < handle
                 % Calculate the "raw" (unrounded) and "ripe" (rounded) error for the batch
                 obj.now_error_raw(obj.epoch) = mean(c2m(obj.error_raw{obj.epoch}));
                 obj.now_error_ripe(obj.epoch) = mean(c2m(obj.error_ripe{obj.epoch}));
+                obj.now_error_real(obj.epoch) = mean(c2m(obj.error_real{obj.epoch}));
             end
             toc
         end
@@ -179,22 +199,25 @@ classdef MatNet < handle
                 disp(obj.epoch)
                 disp(obj.now_error_raw(obj.epoch))
                 disp(obj.now_error_ripe(obj.epoch))
+                disp(obj.now_error_real(obj.epoch))
             end
             while (obj.epoch <= (num_epochs - 1) && abs(obj.now_error_ripe(obj.epoch)) > tolerance)
                 obj.train(X_sims, L_target, lr)
                 disp(obj.epoch)
                 disp(obj.now_error_raw(obj.epoch))
                 disp(obj.now_error_ripe(obj.epoch))
+                disp(obj.now_error_real(obj.epoch))
             end
         end
         
-        function [test_L_hat, test_error_raw, test_error_ripe] = test(obj, X_sims, L_target)
+        function [test_L_hat, test_error_raw, test_error_ripe, test_error_real] = test(obj, X_sims, L_target)
             assert(size(X_sims, 3) == size(L_target, 3));
             dataset_length = size(X_sims, 3);
-            
             test_L_hat = zeros(size(L_target));
+            test_L_hat_valid = zeros(size(L_target));
             test_error_raw = zeros(dataset_length, 1);
             test_error_ripe = zeros(dataset_length, 1);
+            test_error_real = zeros(dataset_length, 1);
             
             for (batch = 1:dataset_length)
                 % Initialize zeroeth layer neuron outputs to be training input
@@ -215,6 +238,14 @@ classdef MatNet < handle
                 % Calculate error of prediction (MSE with Frobenius norm) before and after rounding
                 test_error_raw(batch) = se_frob(test_L_hat(:, :, batch), L_target(:, :, batch));
                 test_error_ripe(batch) = se_frob(round(test_L_hat(:, :, batch)), L_target(:, :, batch));
+                L_list = generate_L_undirected(size(L_target, 1));
+                L_error_real = zeros(size(L_list, 3), 1);
+                for (m = 1:size(L_list, 3))
+                    L_error_real(m, 1) = se_frob(L_list(:, :, m), test_L_hat(:, :, batch));
+                end
+                [~, test_L_hat_valid_ind] = min(L_error_real);
+                test_L_hat_valid(:, :, batch) = L_list(:, :, test_L_hat_valid_ind);
+                test_error_real(batch) = se_frob(test_L_hat_valid(:, :, batch), L_target(:, :, batch));
             end
         end
         
@@ -223,7 +254,10 @@ classdef MatNet < handle
                 error_vals = transpose(c2m(cat(3, [obj.error_raw{:}])));
             elseif strcmp(error_type, 'ripe')
                 error_vals = transpose(c2m(cat(3, [obj.error_ripe{:}])));
+            elseif strcmp(error_type, 'real')
+                error_vals = transpose(c2m(cat(3, [obj.error_real{:}])));
             end
+            
             error_vector = zeros(numel(error_vals), 2);
             for (i = 1:size(error_vals, 1))
                 error_vector((1 + (i - 1)*size(error_vals, 2)):((i)*size(error_vals, 2)), :) = ...

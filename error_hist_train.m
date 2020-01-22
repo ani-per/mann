@@ -1,10 +1,13 @@
-function error_hist_train(error_vector, error_type, num_bins, fig_size, font_size)
+function error_hist_train(error_vector, error_type, num_bins, fig_size, font_size, num_nodes, num_sims)
         if strcmp(error_type, 'raw')
             hist_ylabel = 'Error Before Rounding';
-            hist_title = {"Train Error Histogram"; 'Error Before Rounding'};
+            hist_title = {sprintf('Train Error Histogram (%d Nodes, %d Cases)', num_nodes, length(error_vector)); 'Error Before Rounding'};
         elseif strcmp(error_type, 'ripe')
-            hist_ylabel = 'Error After Rounding';
-            hist_title = {"Train Error Histogram"; 'Error After Rounding'};
+            hist_ylabel = 'Error After Rounding to Nearest Integer';
+            hist_title = {sprintf('Train Error Histogram (%d Nodes, %d Cases)', num_nodes, length(error_vector)); 'Error After Rounding to Nearest Integer'};
+        elseif strcmp(error_type, 'real')
+            hist_ylabel = 'Error After Rounding to Nearest Valid Laplacian';
+            hist_title = {sprintf('Train Error Histogram (%d Nodes, %d Cases)', num_nodes, length(error_vector)); 'Error After Rounding to Nearest Valid Laplacian'};
         end
         h = figure();
         h.Position = fig_size;
@@ -32,6 +35,8 @@ function error_hist_train(error_vector, error_type, num_bins, fig_size, font_siz
         xlabel('Epoch', 'Interpreter', 'Latex', 'FontSize', font_size);
         ylabel(hist_ylabel, 'Interpreter', 'Latex', 'FontSize', font_size);
         title(hist_title, 'Interpreter', 'Latex', 'FontSize', font_size*1.25);
-        export_fig(strcat('./figs/train_error_histogram_', error_type, '.png'), '-nocrop');
+        root = fullfile(pwd, 'figs', 'local_consensus', 'hist', 'train');
+        smart_mkdir(root);
+        export_fig(fullfile(root, sprintf('error_hist_%d_nodes_%d_sims_%s.png', num_nodes, num_sims, error_type)), '-nocrop');
         close(h);
 end

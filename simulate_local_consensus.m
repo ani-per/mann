@@ -16,7 +16,7 @@ timestep = 0.125; % Timestep for ODE 45 integration
 for n = 2:5 % Number of nodes, lower limit 2 and upper limit 5 (for now),
             % as 6+ have many more unique Laplacians and hence require much
             % more memory/time to run
-    disp("n: " + n); % Track progress in L
+    disp('n: ' + n); % Track progress in L
     sim_count = 1; % Counter of number of individual simulations
     L_count = 1; % Counter of number of unique L matrices generated
 
@@ -32,7 +32,7 @@ for n = 2:5 % Number of nodes, lower limit 2 and upper limit 5 (for now),
         % Hash generation for L
         L = L_list(:, :, i);
         L_hash = GetMD5(L);
-        disp("L Hash: " + L_hash); % Track progress in L
+        disp('L Hash: ' + L_hash); % Track progress in L
 
         % Domain
         t_range = [0:timestep:10];
@@ -43,7 +43,7 @@ for n = 2:5 % Number of nodes, lower limit 2 and upper limit 5 (for now),
             sims(sim_count).L_hash = L_hash;
 
             % Track progress in individual simulations
-            disp("Sim " + sim_count + "/" + sim_count_total);
+            disp('Sim ' + sim_count + '/' + sim_count_total);
 
             % Simulate
             [T, X] = simulate(@local_protocol, L, t_range, L_hash, depict, xbounds, j, colors, fig_size, font_size);
@@ -51,9 +51,9 @@ for n = 2:5 % Number of nodes, lower limit 2 and upper limit 5 (for now),
             sim_count = inc(sim_count);
             
             if (save_ind)
-                root = fullfile(pwd, "data", "local_consensus", n + "_nodes", "ind");
+                root = fullfile(pwd, 'data', 'local_consensus', n + '_nodes', 'ind');
                 smart_mkdir(root);
-                writematrix(X, fullfile(root, "sims_" + n + "_nodes_" + "L_" + L_hash + "_" + int2str(j) + ".csv"))
+                writematrix(X, fullfile(root, 'sims_' + n + '_nodes_' + 'L_' + L_hash + '_' + int2str(j) + '.csv'))
             end
         end
         L_count = inc(L_count);
@@ -61,16 +61,16 @@ for n = 2:5 % Number of nodes, lower limit 2 and upper limit 5 (for now),
     sim_count = sim_count - 1;
 
     % Save total results of simulations
-    root = fullfile(pwd, "data", "local_consensus", n + "_nodes", "sims");
+    root = fullfile(pwd, 'data', 'local_consensus', n + '_nodes', 'sims');
     smart_mkdir(root);
-    save(fullfile(root, "sims_" + n + "_nodes_" + sim_count + "_sims" + ".mat"), 'sims')
+    save(fullfile(root, 'sims_' + n + '_nodes_' + sim_count + '_sims' + '.mat'), 'sims')
     
     % Save hashes and corresponding Laplacians for hashing in R
     L_keys = vertcat(sims(:).L_hash);
     L_vals = cat(3, sims(:).L);
-    root = fullfile(pwd, "hash", "keys_vals", "local_consensus", n + "_nodes");
+    root = fullfile(pwd, 'hash', 'keys_vals', 'local_consensus', n + '_nodes');
     smart_mkdir(root);
-    save(fullfile(root, "hash_" + n + "_nodes_" + sim_count + "_sims" + ".mat"), 'L_keys', 'L_vals')
+    save(fullfile(root, 'hash_' + n + '_nodes_' + sim_count + '_sims' + '.mat'), 'L_keys', 'L_vals')
     
     % Construct vectorized feature and target matrices from simulations
     all_x = cat(3, sims(:).X);
@@ -80,12 +80,12 @@ for n = 2:5 % Number of nodes, lower limit 2 and upper limit 5 (for now),
     target = target./max(target, [], 2);
     
     % Save feature and target matrices of simulations
-    root = fullfile(pwd, "data", "local_consensus", n + "_nodes", "feature");
+    root = fullfile(pwd, 'data', 'local_consensus', n + '_nodes', 'feature');
     smart_mkdir(root);
-    save(fullfile(root, "feature_" + n + "_nodes_" + sim_count + "_sims" + ".mat"), 'feature');
-    root = fullfile(pwd, "data", "local_consensus", n + "_nodes", "target");
+    save(fullfile(root, 'feature_' + n + '_nodes_' + sim_count + '_sims' + '.mat'), 'feature');
+    root = fullfile(pwd, 'data', 'local_consensus', n + '_nodes', 'target');
     smart_mkdir(root);
-    save(fullfile(root, "target_" + n + "_nodes_" + sim_count + "_sims" + ".mat"), 'target');
+    save(fullfile(root, 'target_' + n + '_nodes_' + sim_count + '_sims' + '.mat'), 'target');
     
     % Import into R? https://stackoverflow.com/q/28080579
     % Hashing in Matlab: https://stackoverflow.com/a/3592050

@@ -27,5 +27,5 @@ function L_list = generate_L_undirected(n)
         end
     end
     L_list = L_list(:, :, connected);
-    % Sequence of connected graphs with n vertices: http://oeis.org/A001187
+    % Sequence of connected labelled graphs with n vertices: http://oeis.org/A001187
 end
