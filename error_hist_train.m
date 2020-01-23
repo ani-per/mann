@@ -1,13 +1,17 @@
 function error_hist_train(error_vector, error_type, num_bins, fig_size, font_size, num_nodes, num_sims)
+        fprintf('Training Results Histogram: %s\n', error_type)
         if strcmp(error_type, 'raw')
             hist_ylabel = 'Error Before Rounding';
-            hist_title = {sprintf('Train Error Histogram (%d Nodes, %d Cases)', num_nodes, length(error_vector)); 'Error Before Rounding'};
+            hist_title = {sprintf('Train Error Histogram (%d Nodes, %d Cases)', num_nodes, length(error_vector)); ...
+                'Error Before Rounding'};
         elseif strcmp(error_type, 'ripe')
             hist_ylabel = 'Error After Rounding to Nearest Integer';
-            hist_title = {sprintf('Train Error Histogram (%d Nodes, %d Cases)', num_nodes, length(error_vector)); 'Error After Rounding to Nearest Integer'};
+            hist_title = {sprintf('Train Error Histogram (%d Nodes, %d Cases)', num_nodes, length(error_vector)); ...
+                'Error After Rounding to Nearest Integer'};
         elseif strcmp(error_type, 'real')
             hist_ylabel = 'Error After Rounding to Nearest Valid Laplacian';
-            hist_title = {sprintf('Train Error Histogram (%d Nodes, %d Cases)', num_nodes, length(error_vector)); 'Error After Rounding to Nearest Valid Laplacian'};
+            hist_title = {sprintf('Train Error Histogram (%d Nodes, %d Cases)', num_nodes, length(error_vector)); ...
+                'Error After Rounding to Nearest Valid Laplacian'};
         end
         
         h = figure();

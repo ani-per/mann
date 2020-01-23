@@ -1,4 +1,5 @@
 function error_hist_test(error_vector, error_type, num_bins, fig_size, font_size, num_nodes, num_sims)
+        fprintf('Test Results Histogram: %s\n', error_type)
         if strcmp(error_type, 'raw')
             hist_xlabel = 'Error Before Rounding';
             hist_title = {sprintf('Test Error Histogram (%d Nodes, %d Cases)', num_nodes, length(error_vector)); ...

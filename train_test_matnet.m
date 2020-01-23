@@ -58,12 +58,10 @@ mn.train_batch(X_sims_train, L_target_train, lr, num_epochs, tolerance);
 
 %% Training Results
 %  Histogram of the training error
-error_vector_train = mn.error_vector('raw');
-error_hist_train(error_vector_train, 'raw', num_bins, fig_size, font_size, num_nodes, num_sims);
-error_vector_train = mn.error_vector('ripe');
-error_hist_train(error_vector_train, 'ripe', num_bins, fig_size, font_size, num_nodes, num_sims);
-error_vector_train = mn.error_vector('real');
-error_hist_train(error_vector_train, 'real', num_bins, fig_size, font_size, num_nodes, num_sims);
+for error_type = ["raw", "ripe", "real"]
+    error_vector_train = mn.error_vector(error_type);
+    error_hist_train(error_vector_train, error_type, num_bins, fig_size, font_size, num_nodes, num_sims);
+end
 
 %% Testing
 % Test MatNet

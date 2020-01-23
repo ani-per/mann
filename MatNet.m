@@ -213,6 +213,7 @@ classdef MatNet < handle
                 fprintf('\tRipe error: %f\n', obj.now_error_ripe(obj.epoch))
                 fprintf('\tReal error: %f\n', obj.now_error_real(obj.epoch))
             end
+            fprintf('---\n')
         end
         
         function [test_L_hat, test_error_raw, test_error_ripe, test_error_real] = test(obj, X_sims, L_target)
