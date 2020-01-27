@@ -11,7 +11,7 @@ fig_size = [50 50 700 700]; fig_count = 1; font_size = 20;
 %% Train/Test Dataset Setup
 % Set number of nodes and number of sims
 num_nodes = 4;
-num_sims = 190;
+num_sims = 380;
 sim_file = ...
     fullfile(pwd, 'data', 'local_consensus', ...
     sprintf('%d_nodes', num_nodes), 'sims', sprintf('sims_%d_nodes_%d_sims.mat', num_nodes, num_sims));
@@ -33,7 +33,7 @@ train_frac = 0.75;
 
 %% MatNet Structure & Creation
 % Structure of hidden arrays
-hidden_neurons = [10; 10];
+hidden_neurons = [10; 10; 8; 5];
 layers.num_neurons = [1; hidden_neurons; 1];
 
 layers.dimensions.U = [size(L_target, 1), size(X_sims, 1); repmat([size(L_target, 1), size(L_target, 1)], length(layers.num_neurons) - 1, 1)];
@@ -47,16 +47,28 @@ rand_dim = [-1, 1];
 mn = MatNet(layers, rand_dim);
 
 %% MatNet Training Parameters
-num_epochs = 2; % Maximum number of iterations for training
+num_epochs = 6; % Maximum number of iterations for training
 lr = 0.75; % Learning rate
 tolerance = 0.5; % Error tolerance
 num_bins = 50; % Number of bins for error histograms
 
+%% Logging
+root = fullfile(pwd, 'data', 'local_consensus', sprintf('%d_nodes', num_nodes), 'logs');
+smart_mkdir(root);
+log_path = fullfile(root, sprintf('log_%d_nodes_%d_sims.csv', num_nodes, num_sims));
+if ~isfile(log_path)
+    log_file = fopen(log_path, 'w+');
+    fprintf(log_file, 'Date,Timestamp,Num_Epochs,Learning Rate,# Hidden Layers,Hidden Layer Structure,Epoch,Avg. Raw Error,Avg. Ripe Error,Avg. Real Error\n');
+end
+log_file = fopen(log_path, 'a');
+fprintf(log_file, '%s,%s,%d,%f,%d,%s,', ...
+    datestr(now,'yyyy/mm/dd'), datestr(now,'HH:MM:SS'), num_epochs, lr, length(hidden_neurons), strcat('''', strjoin(string(hidden_neurons), '-')));
+
 %% Training
 % Train MatNet
-mn.train_batch(X_sims_train, L_target_train, lr, num_epochs, tolerance);
+mn.train_batch(X_sims_train, L_target_train, lr, num_epochs, tolerance, log_path);
 
-%% Training Results
+%%% Training Results
 %  Histogram of the training error
 for error_type = ["raw", "ripe", "real"]
     error_vector_train = mn.error_vector(error_type);
@@ -67,7 +79,7 @@ end
 % Test MatNet
 [test_L_hat, test_error_raw, test_error_ripe, test_error_real] = mn.test(X_sims_test, L_target_test);
 
-%% Testing Results
+%%% Testing Results
 % Histogram of the test error
 error_hist_test(test_error_raw(test_error_raw >= 0), 'raw', num_bins, fig_size, font_size, num_nodes, num_sims);
 error_hist_test(test_error_ripe(test_error_ripe >= 0), 'ripe', num_bins, fig_size, font_size, num_nodes, num_sims);

@@ -1,0 +1,6 @@
+Date,Timestamp,Num_Epochs,Learning Rate,# Hidden Layers,Hidden Layer Structure,Epoch,Avg. Raw Error,Avg. Ripe Error,Avg. Real Error
+2020/01/23,12:25:18,5,0.750000,2,'10-10,1,13.934660,14.211268,5.098592
+,,,,,,2,3.361760,4.066901,4.626761
+,,,,,,3,3.074305,3.961268,4.528169
+,,,,,,4,2.968211,3.933099,4.415493
+,,,,,,5,2.912885,3.894366,4.302817

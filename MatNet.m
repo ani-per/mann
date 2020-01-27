@@ -103,9 +103,7 @@ classdef MatNet < handle
         % Train network using feature matrix X_sims and target matrix L_target
         % Currently using stochastic gradient descent
         function train(obj, X_sims, L_target, lr)
-            %  if (obj.epoch > 0 && any(cellfun('isempty', obj.error_raw{obj.epoch})))
-            %      obj.reset
-            %  end
+            update_freq = 1/5;
             assert(size(X_sims, 3) == size(L_target, 3));
             dataset_length = size(X_sims, 3);
             obj.epoch = obj.epoch + 1;
@@ -118,8 +116,8 @@ classdef MatNet < handle
             tic
             fprintf('\tBatch: ');
             for (batch = 1:dataset_length)
-                if (mod(batch, floor(dataset_length/4)) == 0)
-                    fprintf('%.1f%%; ', 25*round((batch/dataset_length)/(0.25)));
+                if (mod(batch, floor(dataset_length*update_freq)) == 0)
+                    fprintf('%.1f%%; ', 100*update_freq*round((batch/dataset_length)/(update_freq)));
                 end
                 % Initialize zeroeth layer neuron outputs to be training input
                 obj.H{1, 1} = m2c(X_sims(:, :, batch));
@@ -198,20 +196,25 @@ classdef MatNet < handle
         
         % Train over epochs
         % End when either max. epochs is reached or tolerance is met
-        function train_batch(obj, X_sims, L_target, lr, num_epochs, tolerance)
+        function train_batch(obj, X_sims, L_target, lr, num_epochs, tolerance, log_path)
+            log_file = fopen(log_path, 'a');
             if (obj.epoch == 0)
-                fprintf('---\nEpoch %d:\n', obj.epoch)
-                obj.train(X_sims, L_target, lr)
-                fprintf('\tRaw error: %f\n', obj.now_error_raw(obj.epoch))
-                fprintf('\tRipe error: %f\n', obj.now_error_ripe(obj.epoch))
-                fprintf('\tReal error: %f\n', obj.now_error_real(obj.epoch))
+                fprintf('---\nEpoch %d/%d:\n', obj.epoch + 1, num_epochs);
+                obj.train(X_sims, L_target, lr);
+                fprintf('\tRaw error: %f\n', obj.now_error_raw(obj.epoch));
+                fprintf('\tRipe error: %f\n', obj.now_error_ripe(obj.epoch));
+                fprintf('\tReal error: %f\n', obj.now_error_real(obj.epoch));
+                fprintf(log_file, '%d,%f,%f,%f\n', obj.epoch, ...
+                    obj.now_error_raw(obj.epoch), obj.now_error_ripe(obj.epoch), obj.now_error_real(obj.epoch));
             end
             while (obj.epoch <= (num_epochs - 1) && abs(obj.now_error_ripe(obj.epoch)) > tolerance)
-                fprintf('---\nEpoch %d:\n', obj.epoch)
-                obj.train(X_sims, L_target, lr)
-                fprintf('\tRaw error: %f\n', obj.now_error_raw(obj.epoch))
-                fprintf('\tRipe error: %f\n', obj.now_error_ripe(obj.epoch))
-                fprintf('\tReal error: %f\n', obj.now_error_real(obj.epoch))
+                fprintf('---\nEpoch %d/%d:\n', obj.epoch + 1, num_epochs);
+                obj.train(X_sims, L_target, lr);
+                fprintf('\tRaw error: %f\n', obj.now_error_raw(obj.epoch));
+                fprintf('\tRipe error: %f\n', obj.now_error_ripe(obj.epoch));
+                fprintf('\tReal error: %f\n', obj.now_error_real(obj.epoch));
+                fprintf(log_file, ',,,,,,%d,%f,%f,%f\n', obj.epoch, ...
+                    obj.now_error_raw(obj.epoch), obj.now_error_ripe(obj.epoch), obj.now_error_real(obj.epoch));
             end
             fprintf('---\n')
         end
