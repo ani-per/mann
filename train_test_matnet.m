@@ -69,12 +69,12 @@ test_log_path = fullfile(root, sprintf('test_log_%d_nodes_%d_sims.csv', num_node
 if ~isfile(train_log_path)
     train_log_file = fopen(train_log_path, 'w+');
     fprintf(train_log_file, ...
-        sprintf(strcat(repmat('%s,', 1, length(train_colnames)), '\n'), convertCharsToStrings(train_colnames)));
+        sprintf(strcat(repmat('%s,', 1, length(train_colnames) - 1), '%s\n'), convertCharsToStrings(train_colnames)));
 end
 if ~isfile(test_log_path)
     test_log_file = fopen(test_log_path, 'w+');
     fprintf(test_log_file, ...
-        sprintf(strcat(repmat('%s,', 1, length(test_colnames)), '\n'), convertCharsToStrings(test_colnames)));
+        sprintf(strcat(repmat('%s,', 1, length(train_colnames) - 1), '%s\n'), convertCharsToStrings(test_colnames)));
 end
 
 % Populating the metadata for the run
