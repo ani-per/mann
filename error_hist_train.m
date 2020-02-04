@@ -20,7 +20,7 @@ function error_hist_train(error_vector, error_type, num_bins, fig_size, font_siz
         % Histogram generation
         [N, C] = hist3(error_vector, [max(error_vector(:, 1)), num_bins]);
         imagesc(1:1:max(error_vector(:, 1)), C{2}, N');
-        colormap(jet);
+        colormap(linspecer);
         cb = colorbar;
         
         % Axis tidying

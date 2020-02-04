@@ -199,20 +199,20 @@ classdef MatNet < handle
         function train_batch(obj, X_sims, L_target, lr, num_epochs, tolerance, log_path)
             log_file = fopen(log_path, 'a');
             if (obj.epoch == 0)
-                sprintf('---\nEpoch %d/%d:\n', obj.epoch + 1, num_epochs);
+                fprintf('---\nEpoch %d/%d:\n', obj.epoch + 1, num_epochs);
                 obj.train(X_sims, L_target, lr);
-                sprintf('\tRaw error: %f\n', obj.now_error_raw(obj.epoch));
-                sprintf('\tRipe error: %f\n', obj.now_error_ripe(obj.epoch));
-                sprintf('\tReal error: %f\n', obj.now_error_real(obj.epoch));
+                fprintf('\tRaw error: %f\n', obj.now_error_raw(obj.epoch));
+                fprintf('\tRipe error: %f\n', obj.now_error_ripe(obj.epoch));
+                fprintf('\tReal error: %f\n', obj.now_error_real(obj.epoch));
                 fprintf(log_file, '%d,%f,%f,%f\n', obj.epoch, ...
                     obj.now_error_raw(obj.epoch), obj.now_error_ripe(obj.epoch), obj.now_error_real(obj.epoch));
             end
             while (obj.epoch <= (num_epochs - 1) && abs(obj.now_error_ripe(obj.epoch)) > tolerance)
-                sprintf('---\nEpoch %d/%d:\n', obj.epoch + 1, num_epochs);
+                fprintf('---\nEpoch %d/%d:\n', obj.epoch + 1, num_epochs);
                 obj.train(X_sims, L_target, lr);
-                sprintf('\tRaw error: %f\n', obj.now_error_raw(obj.epoch));
-                sprintf('\tRipe error: %f\n', obj.now_error_ripe(obj.epoch));
-                sprintf('\tReal error: %f\n', obj.now_error_real(obj.epoch));
+                fprintf('\tRaw error: %f\n', obj.now_error_raw(obj.epoch));
+                fprintf('\tRipe error: %f\n', obj.now_error_ripe(obj.epoch));
+                fprintf('\tReal error: %f\n', obj.now_error_real(obj.epoch));
                 fprintf(log_file, ',,,,,,%d,%f,%f,%f\n', obj.epoch, ...
                     obj.now_error_raw(obj.epoch), obj.now_error_ripe(obj.epoch), obj.now_error_real(obj.epoch));
             end
@@ -220,7 +220,6 @@ classdef MatNet < handle
         end
         
         function [test_L_hat, test_error_raw, test_error_ripe, test_error_real] = test(obj, X_sims, L_target, log_path)
-            log_file = fopen(log_path, 'a');
             assert(size(X_sims, 3) == size(L_target, 3));
             dataset_length = size(X_sims, 3);
             test_L_hat = zeros(size(L_target));
@@ -256,10 +255,8 @@ classdef MatNet < handle
                 [~, test_L_hat_valid_ind] = min(L_error_real);
                 test_L_hat_valid(:, :, batch) = L_list(:, :, test_L_hat_valid_ind);
                 test_error_real(batch) = se_frob(test_L_hat_valid(:, :, batch), L_target(:, :, batch));
+                c2m(obj.error_raw{obj.epoch})
             end
-            fprintf(log_file, '%f,%f,%f,%f,%f,%f\n', ...
-                    mean(test_error_raw), mean(test_error_ripe), mean(test_error_real), ...
-                    std(test_error_raw), std(test_error_ripe), std(test_error_real));
         end
         
         function error_vector = error_vector(obj, error_type)
