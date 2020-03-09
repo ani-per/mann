@@ -37,7 +37,7 @@ function error_hist_test(error_vector, error_type, num_bins, fig_size, font_size
         % Exporting
         root = fullfile(pwd, 'figs', 'local_consensus', 'hist', 'test', sprintf('%d_nodes', num_nodes));
         smart_mkdir(root);
-        hist_filepath = fullfile(root, sprintf('error_hist_%d_nodes_%d_sims_%s.png', num_nodes, num_sims, error_type));
-        export_fig(hist_filepath, '-nocrop');
+        hist_filepath = fullfile(root, sprintf('test_error_hist_%d_nodes_%d_sims_%s.png', num_nodes, num_sims, error_type));
+        export_fig(hist_filepath);
         close(h);
 end

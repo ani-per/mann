@@ -1,16 +1,16 @@
-function error_hist_train(error_vector, error_type, num_bins, fig_size, font_size, num_nodes, num_sims)
+function error_hist_train(error_vector, error_type, num_bins, fig_size, font_size, num_nodes, num_sims, num_epochs)
         fprintf('Training Results Histogram: %s\n', error_type)
         if strcmp(error_type, 'raw')
             hist_ylabel = 'Error Before Rounding';
-            hist_title = {sprintf('Train Error Histogram (%d Nodes, %d Cases)', num_nodes, length(error_vector)); ...
+            hist_title = {sprintf('Train Error Histogram (%d Nodes, %d Cases)', num_nodes, length(error_vector)/num_epochs); ...
                 'Error Before Rounding'};
         elseif strcmp(error_type, 'ripe')
             hist_ylabel = 'Error After Rounding to Nearest Integer';
-            hist_title = {sprintf('Train Error Histogram (%d Nodes, %d Cases)', num_nodes, length(error_vector)); ...
+            hist_title = {sprintf('Train Error Histogram (%d Nodes, %d Cases)', num_nodes, length(error_vector)/num_epochs); ...
                 'Error After Rounding to Nearest Integer'};
         elseif strcmp(error_type, 'real')
             hist_ylabel = 'Error After Rounding to Nearest Valid Laplacian';
-            hist_title = {sprintf('Train Error Histogram (%d Nodes, %d Cases)', num_nodes, length(error_vector)); ...
+            hist_title = {sprintf('Train Error Histogram (%d Nodes, %d Cases)', num_nodes, length(error_vector)/num_epochs); ...
                 'Error After Rounding to Nearest Valid Laplacian'};
         end
         
@@ -54,7 +54,7 @@ function error_hist_train(error_vector, error_type, num_bins, fig_size, font_siz
         % Exporting
         root = fullfile(pwd, 'figs', 'local_consensus', 'hist', 'train', sprintf('%d_nodes', num_nodes));
         smart_mkdir(root);
-        hist_filepath = fullfile(root, sprintf('error_hist_%d_nodes_%d_sims_%s.png', num_nodes, num_sims, error_type));
-        export_fig(hist_filepath, '-nocrop');
+        hist_filepath = fullfile(root, sprintf('train_error_hist_%d_nodes_%d_sims_%s.png', num_nodes, num_sims, error_type));
+        export_fig(hist_filepath);
         close(h);
 end

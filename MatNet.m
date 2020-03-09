@@ -19,6 +19,11 @@ classdef MatNet < handle
         dV
         dB
         
+        % Sparsity
+        rho_des % Sparsity coefficient
+        rho % Average activation of each hidden layer
+        R % Activation entropy of hidden layers
+        
         L_hat % Neural network output: calculated target Laplacian matrix
         L_hat_valid % "Closest" valid Laplacian to L_hat
         error_raw % Array of Frobenius-normed error for each batch at each epoch before rounding
@@ -48,6 +53,11 @@ classdef MatNet < handle
             % Initialize neuron outputs
             obj.N = cell(1, obj.num_hidden + 1);
             obj.H = cell(1, obj.num_hidden + 1);
+            
+            % Initialize sparsity coefficients
+            obj.rho_des = 0.05;
+            obj.rho = cell(1, obj.num_hidden);
+            obj.R = cell(1, obj.num_hidden);
             
             % Set up empty hidden layer structure
             for (k = 1:obj.num_hidden)
@@ -100,9 +110,10 @@ classdef MatNet < handle
             obj.L_hat_valid = {};
         end
         
-        % Train network using feature matrix X_sims and target matrix L_target
+        % Train network using feature matrix X_sims and target matrix
+        % L_target, with sparsity penalty if desired
         % Currently using stochastic gradient descent
-        function train(obj, X_sims, L_target, lr)
+        function train(obj, X_sims, L_target, lr, beta)
             update_freq = 1/5;
             assert(size(X_sims, 3) == size(L_target, 3));
             dataset_length = size(X_sims, 3);
@@ -129,6 +140,10 @@ classdef MatNet < handle
                             t3(c2m(obj.V{1, k}(:, :, :, j)))) + c2m(obj.B{1, k}(:, :, :, j))), 3));
                         obj.H{1, k + 1}(:, :, j) = m2c(sigmoid(c2m(obj.N{1, k + 1}(:, :, j))));
                     end
+                    obj.rho{1, k}(:, :, :) = m2c(mean(c2m(obj.H{1, k + 1}), 3));
+                    obj.R{1, k} = m2c(sum((((obj.rho_des)*(log((obj.rho_des)./(c2m(obj.rho{1, k}))))) + ...
+                        ((1 - obj.rho_des)*(log((1 - obj.rho_des)./(1 - c2m(obj.rho{1, k})))))), ...
+                        'all'));
                 end
                 
                 % Target prediction
@@ -164,8 +179,9 @@ classdef MatNet < handle
                 for (k = (obj.num_hidden - 1):-1:1)
                     for (j = 1:obj.layers.num_neurons(k + 1))
                         for (i = 1:obj.layers.num_neurons(k))
-                            obj.delta{1, k}(:, :, i, j) = m2c(sum(mtimesx(mtimesx(permute(c2m(obj.U{1, k + 1}(:, :, j, :)), [2 1 3 4]), ...
-                                (c2m(obj.delta{1, k + 1}(:, :, j, :)))), (c2m(obj.V{1, k + 1}(:, :, j, :)))), 4) ...
+                            obj.delta{1, k}(:, :, i, j) = m2c((sum(mtimesx(mtimesx(permute(c2m(obj.U{1, k + 1}(:, :, j, :)), [2 1 3 4]), ...
+                                (c2m(obj.delta{1, k + 1}(:, :, j, :)))), (c2m(obj.V{1, k + 1}(:, :, j, :)))), 4) + ...
+                                beta*(((-obj.rho_des)./(c2m(obj.rho{1, k}))) + ((1 - obj.rho_des)./(1 - c2m(obj.rho{1, k}))))) ...
                                 .*c2m(obj.H{1, k + 1}(:, :, j)).*(1 - c2m(obj.H{1, k + 1}(:, :, j))));
                             obj.dU{1, k}(:, :, i, j) = m2c(c2m(obj.delta{1, k}(:, :, i, j))*c2m(obj.V{1, k}(:, :, i, j))*t3(c2m(obj.H{1, k}(:, :, i))));
                             obj.dV{1, k}(:, :, i, j) = m2c(t3(c2m(obj.delta{1, k}(:, :, i, j)))*c2m(obj.U{1, k}(:, :, i, j))*c2m(obj.H{1, k}(:, :, i)));
@@ -196,23 +212,23 @@ classdef MatNet < handle
         
         % Train over epochs
         % End when either max. epochs is reached or tolerance is met
-        function train_batch(obj, X_sims, L_target, lr, num_epochs, tolerance, log_path)
+        function train_batch(obj, X_sims, L_target, lr, num_epochs, tolerance, log_path, beta)
             log_file = fopen(log_path, 'a');
             if (obj.epoch == 0)
-                sprintf('---\nEpoch %d/%d:\n', obj.epoch + 1, num_epochs);
-                obj.train(X_sims, L_target, lr);
-                sprintf('\tRaw error: %f\n', obj.now_error_raw(obj.epoch));
-                sprintf('\tRipe error: %f\n', obj.now_error_ripe(obj.epoch));
-                sprintf('\tReal error: %f\n', obj.now_error_real(obj.epoch));
+                fprintf('---\nEpoch %d/%d:\n', obj.epoch + 1, num_epochs);
+                obj.train(X_sims, L_target, lr, beta);
+                fprintf('\tRaw error: %f\n', obj.now_error_raw(obj.epoch));
+                fprintf('\tRipe error: %f\n', obj.now_error_ripe(obj.epoch));
+                fprintf('\tReal error: %f\n', obj.now_error_real(obj.epoch));
                 fprintf(log_file, '%d,%f,%f,%f\n', obj.epoch, ...
                     obj.now_error_raw(obj.epoch), obj.now_error_ripe(obj.epoch), obj.now_error_real(obj.epoch));
             end
             while (obj.epoch <= (num_epochs - 1) && abs(obj.now_error_ripe(obj.epoch)) > tolerance)
-                sprintf('---\nEpoch %d/%d:\n', obj.epoch + 1, num_epochs);
-                obj.train(X_sims, L_target, lr);
-                sprintf('\tRaw error: %f\n', obj.now_error_raw(obj.epoch));
-                sprintf('\tRipe error: %f\n', obj.now_error_ripe(obj.epoch));
-                sprintf('\tReal error: %f\n', obj.now_error_real(obj.epoch));
+                fprintf('---\nEpoch %d/%d:\n', obj.epoch + 1, num_epochs);
+                obj.train(X_sims, L_target, lr, beta);
+                fprintf('\tRaw error: %f\n', obj.now_error_raw(obj.epoch));
+                fprintf('\tRipe error: %f\n', obj.now_error_ripe(obj.epoch));
+                fprintf('\tReal error: %f\n', obj.now_error_real(obj.epoch));
                 fprintf(log_file, ',,,,,,%d,%f,%f,%f\n', obj.epoch, ...
                     obj.now_error_raw(obj.epoch), obj.now_error_ripe(obj.epoch), obj.now_error_real(obj.epoch));
             end
@@ -240,6 +256,10 @@ classdef MatNet < handle
                             t3(c2m(obj.V{1, k}(:, :, :, j)))) + c2m(obj.B{1, k}(:, :, :, j))), 3));
                         obj.H{1, k + 1}(:, :, j) = m2c(sigmoid(c2m(obj.N{1, k + 1}(:, :, j))));
                     end
+                    obj.rho{1, k}(:, :, :) = m2c(mean(c2m(obj.H{1, k + 1}), 3));
+                    obj.R{1, k} = m2c(sum((((obj.rho_des)*(log((obj.rho_des)./(c2m(obj.rho{1, k}))))) + ...
+                        ((1 - obj.rho_des)*(log((1 - obj.rho_des)./(1 - c2m(obj.rho{1, k})))))), ...
+                        'all'));
                 end
                 
                 % Target prediction
