@@ -1,4 +1,0 @@
-Date,Timestamp,Num_Epochs,Learning Rate,# Hidden Layers,Hidden Layer Structure,Epoch,Avg. Raw Train Error,Avg. Ripe Train Error,Avg. Real Train Error
-2020/03/04,01:08:58,3,0.750000,2,'10-10,1,8.819846,10.367033,7.667399
-,,,,,,2,5.256567,7.016667,7.471795
-,,,,,,3,5.252388,7.011172,7.470330

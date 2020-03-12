@@ -19,6 +19,11 @@ classdef MatNet < handle
         dV
         dB
         
+        % Adagrad Backpropagation Meta-Parameters
+        dU_G
+        dV_G
+        dB_G
+        
         % Sparsity
         rho_des % Sparsity coefficient
         rho % Average activation of each hidden layer
@@ -45,10 +50,15 @@ classdef MatNet < handle
             obj.U = cell(1, obj.num_hidden);
             obj.V = cell(1, obj.num_hidden);
             obj.B = cell(1, obj.num_hidden);
+            
+            obj.delta = cell(1, obj.num_hidden);
             obj.dU = cell(1, obj.num_hidden);
             obj.dV = cell(1, obj.num_hidden);
             obj.dB = cell(1, obj.num_hidden);
-            obj.delta = cell(1, obj.num_hidden);
+            
+            obj.dU_G = cell(1, obj.num_hidden);
+            obj.dV_G = cell(1, obj.num_hidden);
+            obj.dB_G = cell(1, obj.num_hidden);
             
             % Initialize neuron outputs
             obj.N = cell(1, obj.num_hidden + 1);
@@ -64,10 +74,16 @@ classdef MatNet < handle
                 obj.U{k} = cell([layers.dimensions.U(k, :), layers.num_neurons(k), layers.num_neurons(k + 1)]);
                 obj.V{k} = cell([layers.dimensions.V(k, :), layers.num_neurons(k), layers.num_neurons(k + 1)]);
                 obj.B{k} = cell([layers.dimensions.B(k, :), layers.num_neurons(k), layers.num_neurons(k + 1)]);
+                
+                obj.delta{k} = cell([layers.dimensions.B(k, :), layers.num_neurons(k), layers.num_neurons(k + 1)]);
                 obj.dU{k} = cell([layers.dimensions.U(k, :), layers.num_neurons(k), layers.num_neurons(k + 1)]);
                 obj.dV{k} = cell([layers.dimensions.V(k, :), layers.num_neurons(k), layers.num_neurons(k + 1)]);
                 obj.dB{k} = cell([layers.dimensions.B(k, :), layers.num_neurons(k), layers.num_neurons(k + 1)]);
-                obj.delta{k} = cell([layers.dimensions.B(k, :), layers.num_neurons(k), layers.num_neurons(k + 1)]);
+                
+                obj.dU_G{k} = cell([layers.dimensions.U(k, :), layers.num_neurons(k), layers.num_neurons(k + 1)]);
+                obj.dV_G{k} = cell([layers.dimensions.V(k, :), layers.num_neurons(k), layers.num_neurons(k + 1)]);
+                obj.dB_G{k} = cell([layers.dimensions.B(k, :), layers.num_neurons(k), layers.num_neurons(k + 1)]);
+                
                 obj.N{k + 1} = cell([layers.dimensions.B(k, :), layers.num_neurons(k + 1)]);
                 obj.H{k + 1} = cell([layers.dimensions.B(k, :), layers.num_neurons(k + 1)]);
                 for (j = 1:layers.num_neurons(k + 1))
@@ -75,6 +91,14 @@ classdef MatNet < handle
                         obj.U{1, k}(:, :, i, j) = m2c(randrange_array(layers.dimensions.U(k, :), rand_dim));
                         obj.V{1, k}(:, :, i, j) = m2c(randrange_array(layers.dimensions.V(k, :), rand_dim));
                         obj.B{1, k}(:, :, i, j) = m2c(randrange_array(layers.dimensions.B(k, :), rand_dim));
+                        
+                        obj.dU{1, k}(:, :, i, j) = m2c(zeros(size(c2m(obj.U{1, k}(:, :, i, j)))));
+                        obj.dV{1, k}(:, :, i, j) = m2c(zeros(size(c2m(obj.V{1, k}(:, :, i, j)))));
+                        obj.dB{1, k}(:, :, i, j) = m2c(zeros(size(c2m(obj.B{1, k}(:, :, i, j)))));
+                        
+                        obj.dU_G{1, k}(:, :, i, j) = m2c(zeros(size(c2m(obj.U{1, k}(:, :, i, j)))));
+                        obj.dV_G{1, k}(:, :, i, j) = m2c(zeros(size(c2m(obj.V{1, k}(:, :, i, j)))));
+                        obj.dB_G{1, k}(:, :, i, j) = m2c(zeros(size(c2m(obj.B{1, k}(:, :, i, j)))));
                     end
                 end
             end
@@ -113,7 +137,7 @@ classdef MatNet < handle
         % Train network using feature matrix X_sims and target matrix
         % L_target, with sparsity penalty if desired
         % Currently using stochastic gradient descent
-        function train(obj, X_sims, L_target, lr, beta)
+        function train(obj, X_sims, L_target, method, lr, beta)
             update_freq = 1/5;
             assert(size(X_sims, 3) == size(L_target, 3));
             dataset_length = size(X_sims, 3);
@@ -186,17 +210,49 @@ classdef MatNet < handle
                             obj.dU{1, k}(:, :, i, j) = m2c(c2m(obj.delta{1, k}(:, :, i, j))*c2m(obj.V{1, k}(:, :, i, j))*t3(c2m(obj.H{1, k}(:, :, i))));
                             obj.dV{1, k}(:, :, i, j) = m2c(t3(c2m(obj.delta{1, k}(:, :, i, j)))*c2m(obj.U{1, k}(:, :, i, j))*c2m(obj.H{1, k}(:, :, i)));
                             obj.dB{1, k}(:, :, i, j) = obj.delta{1, k}(:, :, i, j);
+                            
+                            if (method == "adagrad") % Adagrad: 
+                                obj.dU_G{1, k}(:, :, i, j) = m2c(c2m(obj.dU_G{1, k}(:, :, i, j)) + ...
+                                    (c2m(obj.dU{1, k}(:, :, i, j))).^2);
+                                obj.dV_G{1, k}(:, :, i, j) = m2c(c2m(obj.dV_G{1, k}(:, :, i, j)) + ...
+                                    (c2m(obj.dV{1, k}(:, :, i, j))).^2);
+                                obj.dB_G{1, k}(:, :, i, j) = m2c(c2m(obj.dB_G{1, k}(:, :, i, j)) + ...
+                                    (c2m(obj.dB{1, k}(:, :, i, j))).^2);
+                            elseif (method == "RMSprop") % RMS Prop:
+                                gamma = 0.9;
+                                obj.dU_G{1, k}(:, :, i, j) = m2c((gamma)*c2m(obj.dU_G{1, k}(:, :, i, j)) + ...
+                                    (1 - gamma)*((c2m(obj.dU{1, k}(:, :, i, j))).^2));
+                                obj.dV_G{1, k}(:, :, i, j) = m2c((gamma)*c2m(obj.dV_G{1, k}(:, :, i, j)) + ...
+                                    (1 - gamma)*((c2m(obj.dV{1, k}(:, :, i, j))).^2));
+                                obj.dB_G{1, k}(:, :, i, j) = m2c((gamma)*c2m(obj.dB_G{1, k}(:, :, i, j)) + ...
+                                    (1 - gamma)*((c2m(obj.dB{1, k}(:, :, i, j))).^2));
+                            end
                         end
                     end
                 end
-
-                % Update weights using stochastic gradient descent with constant learning rate
-                for (k = (obj.num_hidden):-1:1)
-                    for (j = 1:obj.layers.num_neurons(k + 1))
-                        for (i = 1:obj.layers.num_neurons(k))
-                            obj.U{1, k}(:, :, i, j) = m2c(c2m(obj.U{1, k}(:, :, i, j)) - (lr*c2m(obj.dU{1, k}(:, :, i, j))));
-                            obj.V{1, k}(:, :, i, j) = m2c(c2m(obj.V{1, k}(:, :, i, j)) - (lr*c2m(obj.dV{1, k}(:, :, i, j))));
-                            obj.B{1, k}(:, :, i, j) = m2c(c2m(obj.B{1, k}(:, :, i, j)) - (lr*c2m(obj.dB{1, k}(:, :, i, j))));
+                
+                if (method == "adagrad" || method == "RMSProp") % Adagrad
+                    epsilon = 1e-6;
+                    for (k = (obj.num_hidden):-1:1)
+                        for (j = 1:obj.layers.num_neurons(k + 1))
+                            for (i = 1:obj.layers.num_neurons(k))
+                                obj.U{1, k}(:, :, i, j) = m2c(c2m(obj.U{1, k}(:, :, i, j)) - ...
+                                    ((lr./(sqrt(epsilon + c2m(obj.dU_G{1, k}(:, :, i, j))))).*(c2m(obj.dU{1, k}(:, :, i, j)))));
+                                obj.V{1, k}(:, :, i, j) = m2c(c2m(obj.V{1, k}(:, :, i, j)) - ...
+                                    ((lr./(sqrt(epsilon + c2m(obj.dV_G{1, k}(:, :, i, j))))).*(c2m(obj.dV{1, k}(:, :, i, j)))));
+                                obj.B{1, k}(:, :, i, j) = m2c(c2m(obj.B{1, k}(:, :, i, j)) - ...
+                                    ((lr./(sqrt(epsilon + c2m(obj.dB_G{1, k}(:, :, i, j))))).*(c2m(obj.dB{1, k}(:, :, i, j)))));
+                            end
+                        end
+                    end
+                else % "Vanilla" gradient descent: Simple learning rate
+                    for (k = (obj.num_hidden):-1:1)
+                        for (j = 1:obj.layers.num_neurons(k + 1))
+                            for (i = 1:obj.layers.num_neurons(k))
+                                obj.U{1, k}(:, :, i, j) = m2c(c2m(obj.U{1, k}(:, :, i, j)) - (lr*c2m(obj.dU{1, k}(:, :, i, j))));
+                                obj.V{1, k}(:, :, i, j) = m2c(c2m(obj.V{1, k}(:, :, i, j)) - (lr*c2m(obj.dV{1, k}(:, :, i, j))));
+                                obj.B{1, k}(:, :, i, j) = m2c(c2m(obj.B{1, k}(:, :, i, j)) - (lr*c2m(obj.dB{1, k}(:, :, i, j))));
+                            end
                         end
                     end
                 end
@@ -212,11 +268,12 @@ classdef MatNet < handle
         
         % Train over epochs
         % End when either max. epochs is reached or tolerance is met
-        function train_batch(obj, X_sims, L_target, lr, num_epochs, tolerance, log_path, beta)
+        function train_batch(obj, X_sims, L_target, method, lr, num_epochs, tolerance, log_path, beta)
             log_file = fopen(log_path, 'a');
+            fprintf('Training method: ' + method + '\n');
             if (obj.epoch == 0)
                 fprintf('---\nEpoch %d/%d:\n', obj.epoch + 1, num_epochs);
-                obj.train(X_sims, L_target, lr, beta);
+                obj.train(X_sims, L_target, method, lr, beta);
                 fprintf('\tRaw error: %f\n', obj.now_error_raw(obj.epoch));
                 fprintf('\tRipe error: %f\n', obj.now_error_ripe(obj.epoch));
                 fprintf('\tReal error: %f\n', obj.now_error_real(obj.epoch));
@@ -225,11 +282,11 @@ classdef MatNet < handle
             end
             while (obj.epoch <= (num_epochs - 1) && abs(obj.now_error_ripe(obj.epoch)) > tolerance)
                 fprintf('---\nEpoch %d/%d:\n', obj.epoch + 1, num_epochs);
-                obj.train(X_sims, L_target, lr, beta);
+                obj.train(X_sims, L_target, method, lr, beta);
                 fprintf('\tRaw error: %f\n', obj.now_error_raw(obj.epoch));
                 fprintf('\tRipe error: %f\n', obj.now_error_ripe(obj.epoch));
                 fprintf('\tReal error: %f\n', obj.now_error_real(obj.epoch));
-                fprintf(log_file, ',,,,,,%d,%f,%f,%f\n', obj.epoch, ...
+                fprintf(log_file, ',,,,,,,%d,%f,%f,%f\n', obj.epoch, ...
                     obj.now_error_raw(obj.epoch), obj.now_error_ripe(obj.epoch), obj.now_error_real(obj.epoch));
             end
             fprintf('---\n')
