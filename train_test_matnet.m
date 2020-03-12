@@ -50,7 +50,7 @@ mn = MatNet(layers, rand_dim);
 
 %% MatNet Training Parameters
 training_method = "RMSprop"; % Method for parameter updates
-num_epochs = 15; % Maximum number of iterations for training
+num_epochs = 10; % Maximum number of iterations for training
 lr = 0.01; % Learning rate
 beta = 0.25; % [0, 1] Weight of sparsity penalty in loss function for training
 tolerance = 0.5; % Error tolerance
