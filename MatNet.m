@@ -189,8 +189,8 @@ classdef MatNet < handle
                 % Backpropagate error from output layer to penultimate hidden layer
                 for (j = 1:obj.layers.num_neurons(obj.num_hidden + 1))
                     for (i = 1:obj.layers.num_neurons(obj.num_hidden))
-                        obj.delta{1, obj.num_hidden}(:, :, i, j) = m2c((c2m(obj.H{1, obj.num_hidden + 1}) - ...
-                            sigmoid(L_target(:, :, batch))).*(c2m(obj.H{1, obj.num_hidden + 1}).*(1 - c2m(obj.H{1, obj.num_hidden + 1}))));
+                        obj.delta{1, obj.num_hidden}(:, :, i, j) = m2c((c2m(obj.N{1, obj.num_hidden + 1}) - ...
+                            L_target(:, :, batch)).*(leaky_relu_prime(c2m(obj.H{1, obj.num_hidden + 1}))));
                         obj.dU{1, obj.num_hidden}(:, :, i, j) = ...
                             m2c(c2m(obj.delta{1, obj.num_hidden}(:, :, i, j))*c2m(obj.V{1, obj.num_hidden}(:, :, i, j))*t3(c2m(obj.H{1, obj.num_hidden}(:, :, i))));
                         obj.dV{1, obj.num_hidden}(:, :, i, j) = ...
@@ -280,7 +280,7 @@ classdef MatNet < handle
                 fprintf(log_file, '%d,%f,%f,%f\n', obj.epoch, ...
                     obj.now_error_raw(obj.epoch), obj.now_error_ripe(obj.epoch), obj.now_error_real(obj.epoch));
             end
-            while (obj.epoch <= (num_epochs - 1) && abs(obj.now_error_ripe(obj.epoch)) > tolerance)
+            while (obj.epoch <= (num_epochs - 1) && abs(obj.now_error_raw(obj.epoch)) > tolerance)
                 fprintf('---\nEpoch %d/%d:\n', obj.epoch + 1, num_epochs);
                 obj.train(X_sims, L_target, method, lr, beta);
                 fprintf('\tRaw error: %f\n', obj.now_error_raw(obj.epoch));
@@ -292,12 +292,12 @@ classdef MatNet < handle
             fprintf('---\n')
         end
         
-        function [test_L_hat, test_error_raw, test_error_ripe, test_error_real] = test(obj, X_sims, L_target, log_path)
+        function [L_hat_test, test_error_raw, test_error_ripe, test_error_real] = test(obj, X_sims, L_target, log_path)
             log_file = fopen(log_path, 'a');
             assert(size(X_sims, 3) == size(L_target, 3));
             dataset_length = size(X_sims, 3);
-            test_L_hat = zeros(size(L_target));
-            test_L_hat_valid = zeros(size(L_target));
+            L_hat_test = zeros(size(L_target));
+            L_hat_test_valid = zeros(size(L_target));
             test_error_raw = zeros(dataset_length, 1);
             test_error_ripe = zeros(dataset_length, 1);
             test_error_real = zeros(dataset_length, 1);
@@ -320,19 +320,19 @@ classdef MatNet < handle
                 end
                 
                 % Target prediction
-                test_L_hat(:, :, batch) = c2m(obj.N{1, obj.num_hidden + 1});
+                L_hat_test(:, :, batch) = c2m(obj.N{1, obj.num_hidden + 1});
                 
                 % Calculate error of prediction (MSE with Frobenius norm) before and after rounding
-                test_error_raw(batch) = se_frob(test_L_hat(:, :, batch), L_target(:, :, batch));
-                test_error_ripe(batch) = se_frob(round(test_L_hat(:, :, batch)), L_target(:, :, batch));
+                test_error_raw(batch) = se_frob(L_hat_test(:, :, batch), L_target(:, :, batch));
+                test_error_ripe(batch) = se_frob(round(L_hat_test(:, :, batch)), L_target(:, :, batch));
                 L_list = generate_L_undirected(size(L_target, 1));
                 L_error_real = zeros(size(L_list, 3), 1);
                 for (m = 1:size(L_list, 3))
-                    L_error_real(m, 1) = se_frob(L_list(:, :, m), test_L_hat(:, :, batch));
+                    L_error_real(m, 1) = se_frob(L_list(:, :, m), L_hat_test(:, :, batch));
                 end
-                [~, test_L_hat_valid_ind] = min(L_error_real);
-                test_L_hat_valid(:, :, batch) = L_list(:, :, test_L_hat_valid_ind);
-                test_error_real(batch) = se_frob(test_L_hat_valid(:, :, batch), L_target(:, :, batch));
+                [~, L_hat_test_valid_ind] = min(L_error_real);
+                L_hat_test_valid(:, :, batch) = L_list(:, :, L_hat_test_valid_ind);
+                test_error_real(batch) = se_frob(L_hat_test_valid(:, :, batch), L_target(:, :, batch));
             end
             fprintf(log_file, '%f,%f,%f,%f,%f,%f\n', ...
                     mean(test_error_raw), mean(test_error_ripe), mean(test_error_real), ...

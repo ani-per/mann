@@ -1,2 +1,0 @@
-Date,Timestamp,Training Method,Num_Epochs,Learning Rate,# Hidden Layers,Hidden Layer Structure,Avg. Raw Train Error,Avg. Ripe Train Error,Avg. Real Train Error,Raw Train Error Std. Dev.,Ripe Train Error Std. Dev.,Real Train Error Std. Dev.
-2020/03/11,23:00:38,RMSprop,15,0.010000,5,'6-5-4-3-2,3.399668,5.166667,5.250000,1.063577,1.260418,1.768519

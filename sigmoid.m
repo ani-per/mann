@@ -1,3 +1,3 @@
-function sig = sigmoid(x)
-    sig = (1 + exp(-x)).^(-1);
+function f = sigmoid(x)
+    f = (1 + exp(-x)).^(-1);
 end

@@ -24,6 +24,10 @@ load(sim_file);
 [X_sims, L_target] = extract_data(sims);
 assert(size(X_sims, 3) == size(L_target, 3));
 dataset_length = size(X_sims, 3);
+% [-1, 1] Normalization of input
+for (i = 1:size(X_sims, 3))
+    X_sims(:, :, i) = rescale(X_sims(:, :, i), -1, 1);
+end
 % Randomly shuffle the order of the dataset
 seq = randperm(dataset_length);
 X_sims = X_sims(:, :, seq);
@@ -35,7 +39,7 @@ train_frac = 0.75;
 
 %% MatNet Structure & Creation
 % Structure of hidden arrays
-hidden_neurons = [6; 5; 4; 3; 2];
+hidden_neurons = [5];
 layers.num_neurons = [1; hidden_neurons; 1];
 
 layers.dimensions.U = [size(L_target, 1), size(X_sims, 1); repmat([size(L_target, 1), size(L_target, 1)], length(layers.num_neurons) - 1, 1)];
@@ -50,68 +54,86 @@ mn = MatNet(layers, rand_dim);
 
 %% MatNet Training Parameters
 training_method = "RMSprop"; % Method for parameter updates
-num_epochs = 10; % Maximum number of iterations for training
+num_epochs = 50; % Maximum number of iterations for training
 lr = 0.01; % Learning rate
-beta = 0.25; % [0, 1] Weight of sparsity penalty in loss function for training
-tolerance = 0.5; % Error tolerance
+beta = 0.1; % [0, 1] Weight of sparsity penalty in loss function for training
+tolerance = 0.05; % Error tolerance
 num_bins = 50; % Number of bins for error histograms
 fig_size(3) = 600 + (num_epochs*12.5); % Width of histograms should increase as number of epochs increases
+train = 1;
+test = 1;
 
 %% Logging
 % Column names for train and test logs
-train_colnames = {'Date', 'Timestamp', 'Training Method', 'Num_Epochs', 'Learning Rate', '# Hidden Layers', 'Hidden Layer Structure', ...
-    'Epoch', 'Avg. Raw Train Error', 'Avg. Ripe Train Error', 'Avg. Real Train Error'};
-test_colnames = {'Date', 'Timestamp', 'Training Method', 'Num_Epochs', 'Learning Rate', '# Hidden Layers', 'Hidden Layer Structure', ...
-    'Avg. Raw Train Error', 'Avg. Ripe Train Error', 'Avg. Real Train Error', ...
-    'Raw Train Error Std. Dev.', 'Ripe Train Error Std. Dev.', 'Real Train Error Std. Dev.'};
+if (train)
+    train_colnames = {'Date', 'Timestamp', 'Training Method', 'Num_Epochs', 'Learning Rate', '# Hidden Layers', 'Hidden Layer Structure', ...
+        'Epoch', 'Avg. Raw Train Error', 'Avg. Ripe Train Error', 'Avg. Real Train Error'};
+end
+if (train && test)
+    test_colnames = {'Date', 'Timestamp', 'Training Method', 'Num_Epochs', 'Learning Rate', '# Hidden Layers', 'Hidden Layer Structure', ...
+        'Avg. Raw Train Error', 'Avg. Ripe Train Error', 'Avg. Real Train Error', ...
+        'Raw Train Error Std. Dev.', 'Ripe Train Error Std. Dev.', 'Real Train Error Std. Dev.'};
+end
 
 % Constructing filepath to train and test logs
 root = fullfile(pwd, 'data', 'local_consensus', sprintf('%d_nodes', num_nodes), 'logs');
 smart_mkdir(root);
-train_log_path = fullfile(root, sprintf('train_log_%d_nodes_%d_sims.csv', num_nodes, num_sims));
-test_log_path = fullfile(root, sprintf('test_log_%d_nodes_%d_sims.csv', num_nodes, num_sims));
+if (train)
+    train_log_path = fullfile(root, sprintf('train_log_%d_nodes_%d_sims.csv', num_nodes, num_sims));
+end
+if (train && test)
+    test_log_path = fullfile(root, sprintf('test_log_%d_nodes_%d_sims.csv', num_nodes, num_sims));
+end
 
 % Generating logs if not already existent
-if ~isfile(train_log_path)
+if (train && ~isfile(train_log_path))
     train_log_file = fopen(train_log_path, 'w+');
     fprintf(train_log_file, ...
         sprintf(strcat(repmat('%s,', 1, length(train_colnames) - 1), '%s\n'), convertCharsToStrings(train_colnames)));
 end
-if ~isfile(test_log_path)
+if (train && test && ~isfile(test_log_path))
     test_log_file = fopen(test_log_path, 'w+');
     fprintf(test_log_file, ...
         sprintf(strcat(repmat('%s,', 1, length(test_colnames) - 1), '%s\n'), convertCharsToStrings(test_colnames)));
 end
 
 % Populating the metadata for the run
-train_log_file = fopen(train_log_path, 'a');
-fprintf(train_log_file, '%s,%s,%s,%d,%f,%d,%s,', ...
-    datestr(now,'yyyy/mm/dd'), datestr(now,'HH:MM:SS'), ...
-    training_method, num_epochs, lr, length(hidden_neurons), strcat('''', strjoin(string(hidden_neurons), '-')));
-test_log_file = fopen(test_log_path, 'a');
-fprintf(test_log_file, '%s,%s,%s,%d,%f,%d,%s,', ...
-    datestr(now,'yyyy/mm/dd'), datestr(now,'HH:MM:SS'), ...
-    training_method, num_epochs, lr, length(hidden_neurons), strcat('''', strjoin(string(hidden_neurons), '-')));
+if (train)
+    train_log_file = fopen(train_log_path, 'a');
+    fprintf(train_log_file, '%s,%s,%s,%d,%f,%d,%s,', ...
+        datestr(now,'yyyy/mm/dd'), datestr(now,'HH:MM:SS'), ...
+        training_method, num_epochs, lr, length(hidden_neurons), strcat('''', strjoin(string(hidden_neurons), '-')));
+end
+if (train && test)
+    test_log_file = fopen(test_log_path, 'a');
+    fprintf(test_log_file, '%s,%s,%s,%d,%f,%d,%s,', ...
+        datestr(now,'yyyy/mm/dd'), datestr(now,'HH:MM:SS'), ...
+        training_method, num_epochs, lr, length(hidden_neurons), strcat('''', strjoin(string(hidden_neurons), '-')));
+end
 
 %% Training
-% Train MatNet
-mn.train_batch(X_sims_train, L_target_train, training_method, lr, num_epochs, tolerance, train_log_path, beta);
-
-%%% Training Results
-% Histogram of the training error
-for error_type = ["raw", "ripe", "real"]
-    error_vector_train = mn.error_vector(error_type);
-    error_hist_train(error_vector_train, error_type, num_bins, fig_size, font_size, num_nodes, num_sims, num_epochs);
+if (train)
+    % Train MatNet
+    mn.train_batch(X_sims_train(:, :, 1:5), L_target_train(:, :, 1:5), training_method, lr, num_epochs, tolerance, train_log_path, beta);
+    
+    %%% Training Results
+    % Histogram of the training error
+    for error_type = ["raw", "ripe", "real"]
+        error_vector_train = mn.error_vector(error_type);
+        error_hist_train(error_vector_train, error_type, num_bins, fig_size, font_size, num_nodes, num_sims, num_epochs);
+    end
 end
 
 %% Testing
-% Test MatNet
-[test_L_hat, test_error_raw, test_error_ripe, test_error_real] = mn.test(X_sims_test, L_target_test, test_log_path);
-
-%%% Testing Results
-% Histogram of the test error
-error_hist_test(test_error_raw(test_error_raw >= 0), 'raw', num_bins, fig_size, font_size, num_nodes, num_sims);
-error_hist_test(test_error_ripe(test_error_ripe >= 0), 'ripe', num_bins, fig_size, font_size, num_nodes, num_sims);
-error_hist_test(test_error_real(test_error_real >= 0), 'real', num_bins, fig_size, font_size, num_nodes, num_sims);
+if (train && test)
+    % Test MatNet
+    [L_hat_test, test_error_raw, test_error_ripe, test_error_real] = mn.test(X_sims_test, L_target_test, test_log_path);
+    
+    %%% Testing Results
+    % Histogram of the test error
+    error_hist_test(test_error_raw(test_error_raw >= 0), 'raw', num_bins, fig_size, font_size, num_nodes, num_sims);
+    error_hist_test(test_error_ripe(test_error_ripe >= 0), 'ripe', num_bins, fig_size, font_size, num_nodes, num_sims);
+    error_hist_test(test_error_real(test_error_real >= 0), 'real', num_bins, fig_size, font_size, num_nodes, num_sims);
+end
 
 %% End Matter

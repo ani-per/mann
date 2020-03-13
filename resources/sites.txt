@@ -21,3 +21,17 @@ https://datascience.stackexchange.com/questions/23486/proper-derivation-of-dz1-e
 https://stats.stackexchange.com/questions/414825/how-exactly-is-the-error-backpropagated-in-backpropagation
 
 https://stats.stackexchange.com/questions/278031/confusion-about-backpropagation-matrix-dimensions
+
+https://www.researchgate.net/post/why_the_prediction_or_the_output_of_neural_network_does_not_change_during_the_test_phase
+
+https://stats.stackexchange.com/questions/261704/training-a-neural-network-for-regression-always-predicts-the-mean
+
+https://machinelearningmastery.com/dropout-for-regularizing-deep-neural-networks/
+
+https://medium.com/@amarbudhiraja/https-medium-com-amarbudhiraja-learning-less-to-learn-better-dropout-in-deep-machine-learning-74334da4bfc5
+
+https://www.researchgate.net/post/Neural_network_outputting_average_values_of_all_outputs-Am_I_doing_anything_wrong
+
+https://ayearofai.com/rohan-4-the-vanishing-gradient-problem-ec68f76ffb9b
+
+https://stats.stackexchange.com/questions/352036/what-should-i-do-when-my-neural-network-doesnt-learn
